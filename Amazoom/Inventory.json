@@ -1,0 +1,14 @@
+﻿[
+  {
+    "itemName": "Shinda",
+    "id": 0,
+    "price": 420,
+    "weight": 10
+  },
+  {
+    "itemName": "Kahlon",
+    "id": 1,
+    "price": 69,
+    "weight": 150
+  }
+]
