@@ -4,29 +4,32 @@ using System.Text.Json;
 using System.IO;
 namespace Amazoom
 {
-   /* public struct Item
-    {
-        public string name;
-        public double weight;
-        public double price;
-        public int id;
-        public int shelfId;
-    }*/
+    /* public struct Item
+     {
+         public string name;
+         public double weight;
+         public double price;
+         public int id;
+         public int shelfId;
+     }*/
     public class Item
     {
-        public Item(string name, double weight, double price, int id, int shelfId)
+        public Item(string name, double weight, double price, int id, int shelfId, int stock)
         {
             this.name = name;
             this.weight = weight;
             this.price = price;
             this.id = id;
             this.shelfId = shelfId;
+            this.stock = stock;
         }
+        public Item() { }
         public string name { get; set; }
         public double weight { get; set; }
         public double price { get; set; }
         public int id { get; set; }
         public int shelfId { get; set; }
+        public int stock { get; set; }
     }
 
     /*public struct Shelf
@@ -76,23 +79,31 @@ namespace Amazoom
         public int height { get; set; }
     }*/
 
-   /* public struct Order
-    {
-        public int id;
-        public List<Item> items;
-        public string status;
-    }*/
+    /* public struct Order
+     {
+         public int id;
+         public List<Item> items;
+         public string status;
+     }*/
     public class Order
     {
-        public Order(int id, List<Item> items, string status)
+        public Order(int id, List<(Item item, int quantity)> items, string status)
         {
             this.id = id;
             this.items = items;
             this.status = status;
         }
+        public Order() { }
         public int id { get; set; }
-        public List<Item> items { get; set; }
+        public List<(Item item, int quantity)> items { get; set; }
         public string status { get; set; }
+    }
+    public class Truck
+    {
+        public Truck()
+        {
+
+        }
     }
 
     public class Computer
@@ -109,7 +120,7 @@ namespace Amazoom
             initializeRobots();
 
             //placeholder item
-            Item newItem = new Item("test", 99,99,1,-1);
+            Item newItem = new Item("test", 99,99,1,-1, 5);
             /*newItem.name = "test";
             newItem.weight = 99;
             newItem.price = 99;
@@ -228,12 +239,12 @@ namespace Amazoom
                 }
 
                 tempRobot.setActiveStatus(true);
-                foreach (Item item in order.items) //figure out whether 'orders' is an array or struct or class
+                foreach ((Item item, int quantity) orderItem in order.items) //figure out whether 'orders' is an array or struct or class
                 {
-
+                    Item item = orderItem.item;
                     (Item, Shelf) currItem = (item, shelves[item.shelfId]);
                     //check if any other robot currently is at current item's cell in warehouse grid. If there is, wait till it empties (threading implementation using Mutex??)
-                    tempRobot.QueueItem(currItem);
+                    tempRobot.QueueItem(currItem, orderItem.quantity);
 
                 }
                 tempRobot.getOrders();
@@ -247,12 +258,30 @@ namespace Amazoom
          * validates an order by ensuring all items are in inventory and stock is available
          * */
         private bool orderIsValid(Order order)
-        {
-            foreach(Item item in order.items)
+        { 
+            
+            Item[] inventory = ReadInventory();
+
+            //Console.WriteLine(items);
+
+            foreach ((Item, int) item in order.items)
             {
-                //foreach(shelf)
+                int item_id = item.Item1.id;
+                int quantity = item.Item2;
+                foreach(Item inv_item in inventory)
+                {
+                    if (item_id == inv_item.id)
+                    {
+                        if (inv_item.stock < quantity)
+                        {
+                            return false;
+                        }
+                        break;
+                    }
+                    
+                }
             }
-            return false;
+            return true;
 
         }
         /*
@@ -263,6 +292,7 @@ namespace Amazoom
 
         public void restockItem(Item newItem)
         {
+            Item[] inventory = ReadInventory();
             Random rand = new Random();
             while (true)
             {
@@ -274,19 +304,30 @@ namespace Amazoom
                     newItem.shelfId = shelves[shelfNumber].id;
                     shelves[shelfNumber].currWeight += newItem.weight;
                     shelves[shelfNumber].items.Add(newItem);
+                    inventory[newItem.id].stock += 1;
                     break;
                 }
 
             }
+            UpdateInventory(inventory);
 
         }
 
-        public void testingJson(Item newItem)
+        public static void UpdateInventory(Item[] newItems)
         {
             string fileName = "../../../testing.json";
-            string jsonString = JsonSerializer.Serialize(newItem);
+            string jsonString = JsonSerializer.Serialize(newItems);
             File.WriteAllText(fileName, jsonString);
-            Console.WriteLine(jsonString);
+            
+        }
+        public static Item[] ReadInventory()
+        {
+            string fileName = "../../../testing.json";
+            string jsonString = File.ReadAllText(fileName);
+            //Item[] items = new Item[2];
+
+            Item[] items = JsonSerializer.Deserialize<Item[]>(jsonString);
+            return items;
         }
     }
 }
