@@ -13,7 +13,7 @@ namespace Amazoom
         private bool isActive = false;
         private Queue<(Item, Shelf)> robotQueue = new Queue<(Item, Shelf)>();
 
-        
+
 
         public Robot(int id, int[] location)
         {
@@ -35,7 +35,7 @@ namespace Amazoom
 
         /*
          * @return: void
-         * move robot to item's location in warehouse and retrieve item. Decrement inventory 
+         * move robot to item's location in warehouse and retrieve item. Decrement inventory
          * */
         public void getOrders()
         {

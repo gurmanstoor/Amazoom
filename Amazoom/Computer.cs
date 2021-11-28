@@ -101,7 +101,7 @@ namespace Amazoom
         public Robot[] robots;
         private readonly int numRobots = 5;
 
-        
+
         public Computer()
         {
             //initialize warehouse shelves and robots
@@ -253,7 +253,7 @@ namespace Amazoom
                 //foreach(shelf)
             }
             return false;
-         
+
         }
         /*
          * @param: an item to be restocked in inventory
