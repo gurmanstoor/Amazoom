@@ -1,18 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.IO;
 namespace Amazoom
 {
-    public struct Item
+   /* public struct Item
     {
         public string name;
         public double weight;
         public double price;
         public int id;
         public int shelfId;
+    }*/
+    public class Item
+    {
+        public Item(string name, double weight, double price, int id, int shelfId)
+        {
+            this.name = name;
+            this.weight = weight;
+            this.price = price;
+            this.id = id;
+            this.shelfId = shelfId;
+        }
+        public string name { get; set; }
+        public double weight { get; set; }
+        public double price { get; set; }
+        public int id { get; set; }
+        public int shelfId { get; set; }
     }
 
-    public struct Shelf
+    /*public struct Shelf
     {
         public List<Item> items;
         public ShelfLocation shelfLocation;
@@ -20,6 +37,23 @@ namespace Amazoom
         public double currWeight;
         public double maxWeight;
 
+    }*/
+    public class Shelf
+    {
+        public Shelf(List<Item> items, ShelfLocation shelfLocation, int id, double currWeight, double maxWeight)
+        {
+            this.items = items;
+            this.shelfLocation = shelfLocation;
+            this.id = id;
+            this.currWeight = currWeight;
+            this.maxWeight = maxWeight;
+        }
+        public Shelf() { }
+        public List<Item> items { get; set; }
+        public ShelfLocation shelfLocation;
+        public int id { get; set; }
+        public double currWeight { get; set; }
+        public double maxWeight { get; set; }
     }
 
     public struct ShelfLocation
@@ -28,13 +62,37 @@ namespace Amazoom
         public string side;
         public int height;
     }
+    /*public class ShelfLocation
+    {
+        public ShelfLocation(int[] location, string side, int height)
+        {
+            this.location = location;
+            this.side = side;
+            this.height = height;
+        }
 
-    public struct Order
+        public int[] location { get; set; }
+        public string side { get; set; }
+        public int height { get; set; }
+    }*/
+
+   /* public struct Order
     {
         public int id;
         public List<Item> items;
         public string status;
-
+    }*/
+    public class Order
+    {
+        public Order(int id, List<Item> items, string status)
+        {
+            this.id = id;
+            this.items = items;
+            this.status = status;
+        }
+        public int id { get; set; }
+        public List<Item> items { get; set; }
+        public string status { get; set; }
     }
 
     public class Computer
@@ -43,7 +101,7 @@ namespace Amazoom
         public Robot[] robots;
         private readonly int numRobots = 5;
 
-        
+
         public Computer()
         {
             //initialize warehouse shelves and robots
@@ -51,12 +109,12 @@ namespace Amazoom
             initializeRobots();
 
             //placeholder item
-            Item newItem;
-            newItem.name = "test";
+            Item newItem = new Item("test", 99,99,1,-1);
+            /*newItem.name = "test";
             newItem.weight = 99;
             newItem.price = 99;
             newItem.id = 1;
-            newItem.shelfId = -1; //shelfId not initially available, set to -1
+            newItem.shelfId = -1;*/ //shelfId not initially available, set to -1
 
             restockItem(newItem);
 
@@ -84,10 +142,10 @@ namespace Amazoom
          * */
         private void initializeShelves()
         {
-            int numRows = 5;
-            int numCols = 8;
-            int height = 3;
-            int numShelves = (numCols - 1) * (numRows - 2) * height;
+            int numRows = 3;
+            int numCols = 4;
+            int height = 2;
+            int numShelves = (numCols-1) * (numRows - 2) * height*2;
 
             this.shelves = new Shelf[numShelves];
             int shelfNum = 0;
@@ -100,7 +158,7 @@ namespace Amazoom
                     for (int k = 0; k < height; k++)
                     {
 
-                        Shelf currShelf;
+                        Shelf currShelf = new Shelf();
                         currShelf.items = new List<Item>();
                         currShelf.id = shelfNum;
                         currShelf.shelfLocation.location = new int[2] { i, j };
@@ -170,7 +228,7 @@ namespace Amazoom
                 }
 
                 tempRobot.setActiveStatus(true);
-                foreach (Item item in orders) //figure out whether 'orders' is an array or struct or class
+                foreach (Item item in order.items) //figure out whether 'orders' is an array or struct or class
                 {
 
                     (Item, Shelf) currItem = (item, shelves[item.shelfId]);
@@ -192,9 +250,10 @@ namespace Amazoom
         {
             foreach(Item item in order.items)
             {
-                foreach(shelf)
+                //foreach(shelf)
             }
-         
+            return false;
+
         }
         /*
          * @param: an item to be restocked in inventory
@@ -222,5 +281,12 @@ namespace Amazoom
 
         }
 
+        public void testingJson(Item newItem)
+        {
+            string fileName = "../../../testing.json";
+            string jsonString = JsonSerializer.Serialize(newItem);
+            File.WriteAllText(fileName, jsonString);
+            Console.WriteLine(jsonString);
+        }
     }
 }
