@@ -216,12 +216,14 @@ namespace Amazoom
             Console.WriteLine("What is the height of your sheving unit? ");
             int height = Convert.ToInt32(Console.ReadLine());
 
-<<<<<<< HEAD
             int numShelves = (numCols-1) * (numRows - 2) * height*2;
+<<<<<<< HEAD
 >>>>>>> Resolved conflict
 =======
             int numShelves = (numCols - 1) * (numRows - 2) * height;
 >>>>>>> Temp push
+=======
+>>>>>>> computer.cs conflict resolved
 
             this.shelves = new Shelf[numShelves];
             int shelfNum = 0;
