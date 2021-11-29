@@ -190,10 +190,21 @@ namespace Amazoom
          * */
         private void initializeShelves()
         {
+<<<<<<< HEAD
             int numRows = 3;
             int numCols = 4;
             int height = 2;
             int numShelves = (numCols - 1) * (numRows - 2) * height * 2;
+=======
+            Console.WriteLine("How many rows does your warehouse have? ");
+            int numRows = Convert.ToInt32(Console.ReadLine());
+            Console.WriteLine("How many columns does your warehouse have? ");
+            int numCols = Convert.ToInt32(Console.ReadLine());
+            Console.WriteLine("What is the height of your sheving unit? ");
+            int height = Convert.ToInt32(Console.ReadLine());
+
+            int numShelves = (numCols-1) * (numRows - 2) * height*2;
+>>>>>>> Resolved conflict
 
             this.shelves = new Shelf[numShelves];
             int shelfNum = 0;
