@@ -9,6 +9,7 @@ namespace Amazoom
         private int id;
         private double currBatteryLevel;
         private double maxLoadingCap = 100.0;
+        private double currentLoad = 0.0;
         private int[] location;
         private bool isActive = false;
         private Queue<(Item, Shelf)> robotQueue = new Queue<(Item, Shelf)>();
@@ -40,7 +41,7 @@ namespace Amazoom
          * @return: void
          * move robot to item's location in warehouse and retrieve item. Decrement inventory
          * */
-        public void getOrders()
+        public void getOrder()
         {
             Item[] inventory = Computer.ReadInventory();
             //process all items of current order in queue
@@ -48,19 +49,30 @@ namespace Amazoom
             {
                 (Item, Shelf) currItem = this.robotQueue.Dequeue();
                 Shelf currShelf = currItem.Item2;
-                this.location = currShelf.shelfLocation.location; //location of a specific item within our warehouse grid
-                for(int i = 0; i < currShelf.items.Count; i++) //iterate over items in that shelf and remove item being processed
+                if(this.currentLoad + currItem.Item1.weight <= this.maxLoadingCap)
                 {
-                    if(currShelf.items[i].id == currItem.Item1.id)
+                    this.location = currShelf.shelfLocation.location; //location of a specific item within our warehouse grid
+                    for (int i = 0; i < currShelf.items.Count; i++) //iterate over items in that shelf and remove item being processed
                     {
-                        currShelf.items.RemoveAt(i);
-                        currShelf.currWeight -= currItem.Item1.weight;
-                        //** decrement inventory as well for removed item **
-                        
-                        inventory[currItem.Item1.id].stock -= 1;
+                        if (currShelf.items[i].id == currItem.Item1.id)
+                        {
+                            currShelf.items.RemoveAt(i);
+                            currShelf.currWeight -= currItem.Item1.weight;
+                            //** decrement inventory as well for removed item **
+
+                            inventory[currItem.Item1.id].stock -= 1;
+                        }
                     }
+                    this.currentLoad += currItem.Item1.weight;
+
+                }
+                else
+                {
+                    //move robot to dock, drop stuff off at bin, come back for remaining items
                 }
             }
+            //ONCE ORDER COMPLETED, ADD ORDER TO PROCESSED ORDERS IN COMPUTER CLASS
+
             Computer.UpdateInventory(inventory);
             return;
         }

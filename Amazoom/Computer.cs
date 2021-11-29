@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System.IO;
+using System.Threading;
 namespace Amazoom
 {
     /* public struct Item
@@ -51,6 +52,7 @@ namespace Amazoom
             this.currWeight = currWeight;
             this.maxWeight = maxWeight;
         }
+
         public Shelf() { }
         public List<Item> items { get; set; }
         public ShelfLocation shelfLocation;
@@ -65,6 +67,7 @@ namespace Amazoom
         public string side;
         public int height;
     }
+
     /*public class ShelfLocation
     {
         public ShelfLocation(int[] location, string side, int height)
@@ -85,6 +88,7 @@ namespace Amazoom
          public List<Item> items;
          public string status;
      }*/
+
     public class Order
     {
         public Order(int id, List<(Item item, int quantity)> items, string status)
@@ -93,24 +97,39 @@ namespace Amazoom
             this.items = items;
             this.status = status;
         }
+
         public Order() { }
         public int id { get; set; }
         public List<(Item item, int quantity)> items { get; set; }
         public string status { get; set; }
     }
+
     public class Truck
     {
-        public Truck()
+        private List<Order> orders { get; set; }
+        private int id { set; get; }
+        private bool isDeliveryTruck { set; get; }
+        private double weightCapacity { set; get; }
+
+        public Truck(double weightCapacity, int id, bool isDeliveryTruck = true)
         {
+            this.isDeliveryTruck = isDeliveryTruck;
+            this.id = id;
+            this.weightCapacity = weightCapacity;
 
         }
     }
 
+
+    // ****    REMEMBER TO CHANGE PUBLIC CLASS MEMBER VARIABLES TO PRIVATE **** //
     public class Computer
     {
         public Shelf[] shelves;
         public Robot[] robots;
         private readonly int numRobots = 5;
+        private bool dockInUse { set; get; } //use sempahores when implementing multi-threaded to confirm whether dock is in use
+        private Queue<Order> processedOrders = new Queue<Order>(); //queue to identify which orders are ready for delivery
+        private List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
 
 
         public Computer()
@@ -128,6 +147,7 @@ namespace Amazoom
             newItem.shelfId = -1;*/ //shelfId not initially available, set to -1
 
             restockItem(newItem);
+            this.dockInUse = false;
 
         }
 
@@ -247,8 +267,10 @@ namespace Amazoom
                     tempRobot.QueueItem(currItem, orderItem.quantity);
 
                 }
-                tempRobot.getOrders();
+                tempRobot.getOrder();
                 tempRobot.setActiveStatus(false);
+
+
             }
         }
 
