@@ -143,7 +143,16 @@ namespace Amazoom
 
         public Computer()
         {
+<<<<<<< HEAD
             //initialize warehouse shelves, robots, and trucks
+=======
+            Console.WriteLine("------------------------------------");
+            Console.WriteLine("------------------------------------");
+            Console.WriteLine("|    Initializing New Warehouse    |");
+            Console.WriteLine("------------------------------------");
+            Console.WriteLine("------------------------------------");
+            //initialize warehouse shelves and robots
+>>>>>>> Temp push
             initializeShelves();
             initializeRobots();
             initializeTrucks();
@@ -163,7 +172,8 @@ namespace Amazoom
             this.robots = new Robot[this.numRobots];
             for (int i = 0; i < this.numRobots; i++)
             {
-                this.robots[i] = new Robot(0, new int[] { 0, 0 });
+                // could have initial location for each robot and this is where it could return to after work is complete and nothing else to do
+                this.robots[i] = new Robot(0, new int[] { 0, 0 });  // need to increment location for each new robot
             }
 
         }
@@ -191,11 +201,14 @@ namespace Amazoom
         private void initializeShelves()
         {
 <<<<<<< HEAD
+<<<<<<< HEAD
             int numRows = 3;
             int numCols = 4;
             int height = 2;
             int numShelves = (numCols - 1) * (numRows - 2) * height * 2;
 =======
+=======
+>>>>>>> Temp push
             Console.WriteLine("How many rows does your warehouse have? ");
             int numRows = Convert.ToInt32(Console.ReadLine());
             Console.WriteLine("How many columns does your warehouse have? ");
@@ -203,8 +216,12 @@ namespace Amazoom
             Console.WriteLine("What is the height of your sheving unit? ");
             int height = Convert.ToInt32(Console.ReadLine());
 
+<<<<<<< HEAD
             int numShelves = (numCols-1) * (numRows - 2) * height*2;
 >>>>>>> Resolved conflict
+=======
+            int numShelves = (numCols - 1) * (numRows - 2) * height;
+>>>>>>> Temp push
 
             this.shelves = new Shelf[numShelves];
             int shelfNum = 0;
