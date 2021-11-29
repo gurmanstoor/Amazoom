@@ -104,10 +104,10 @@ namespace Amazoom
         }
     }
 
-    public class DeliveryTruck: Truck
+    public class DeliveryTruck : Truck
     {
         public List<Order> orders = new List<Order>();
-        public DeliveryTruck(double maxWeightCapacity, int id) : base(maxWeightCapacity,id)
+        public DeliveryTruck(double maxWeightCapacity, int id) : base(maxWeightCapacity, id)
         {
 
         }
@@ -254,7 +254,7 @@ namespace Amazoom
         public void loadShelves()
         {
             List<Item> currInventory = ReadInventory();
-            foreach(Item item in currInventory)
+            foreach (Item item in currInventory)
             {
                 shelves[item.shelfId].items.Add(item);
             }
@@ -307,7 +307,7 @@ namespace Amazoom
                     tempRobot.QueueItem(currItem, 1);
                 }
                 // do we need to send in order? since it pop order off the queue anyways
-                
+
                 tempRobot.getOrder(order); //invoke Robot getOrder() method to retrieve all items from warehouse
                 tempRobot.setActiveStatus(false);
                 //loadProcessedOrders(); // --> replace with "loadOrder()" method which will move the most recent order to the current delivery truck. If truck gets full, pop off queue and start loading next truck
@@ -315,17 +315,17 @@ namespace Amazoom
             }
         }
 
-        private List<Item> orderToItems(Order order) 
+        private List<Item> orderToItems(Order order)
         {
             List<Item> inventory = ReadInventory();
             List<Item> items = new List<Item>();
-            foreach((Product, int) product in order.products)
+            foreach ((Product, int) product in order.products)
             {
                 int quantity = product.Item2;
 
                 for (int i = 0; i < inventory.Count; i++)
                 {
-                    if(product.Item1.name == inventory[i].name)
+                    if (product.Item1.name == inventory[i].name)
                     {
                         items.Add(inventory[i]);
                         quantity--;
@@ -335,14 +335,14 @@ namespace Amazoom
                         break;
                     }
                 }
-                
+
             }
             return items;
         }
 
         private void serviceNextTruck()
         {
-            if(this.deliveryTruckQueue.Count == this.numTrucks)
+            if (this.deliveryTruckQueue.Count == this.numTrucks)
             {
                 this.dockingQueue.Enqueue(this.deliveryTruckQueue.Dequeue());
             }
@@ -351,7 +351,7 @@ namespace Amazoom
                 RestockTruckItems((RestockTruck)this.dockingQueue.Dequeue());
             }
 
-            DeliveryTruck currTruck = (DeliveryTruck) this.dockingQueue.Dequeue();
+            DeliveryTruck currTruck = (DeliveryTruck)this.dockingQueue.Dequeue();
             loadProcessedOrders(currTruck);
         }
         /*
@@ -370,9 +370,9 @@ namespace Amazoom
             foreach ((Product, int) product in order.products)
             {
                 int product_id = product.Item1.id;
-                
+
                 int quantity = product.Item2;
-                foreach(Product catalog_product in catalog)
+                foreach (Product catalog_product in catalog)
                 {
                     // idk if we can use id can be used cause each product will have multiple stock items and each of those items has sep id
                     if (product_id == catalog_product.id)
@@ -383,7 +383,7 @@ namespace Amazoom
                         }
                         break;
                     }
-                    
+
                 }
             }
             return true;
@@ -399,14 +399,14 @@ namespace Amazoom
         public void restockItem(Item newItem)
         {
             List<Item> inventory = ReadInventory();
-            
+
             newItem.id = inventory.Count;
-            
+
             Random rand = new Random();
             while (true)
             {
 
-                int shelfNumber = rand.Next(0, this.shelves.Length-1);
+                int shelfNumber = rand.Next(0, this.shelves.Length - 1);
                 if (shelves[shelfNumber].currWeight + newItem.weight <= shelves[shelfNumber].maxWeight)
                 {
                     newItem.shelfId = shelves[shelfNumber].id;
@@ -433,10 +433,10 @@ namespace Amazoom
             {
                 Order currOrder = processedOrders.Peek();
                 double currOrderWeight = 0.0;
-                
+
                 foreach ((Product, int) item in currOrder.products)
                 {
-                    currOrderWeight += ((item.Item1.weight)*item.Item2);  // order has multiple quantities
+                    currOrderWeight += ((item.Item1.weight) * item.Item2);  // order has multiple quantities
                 }
 
                 if (currOrderWeight <= currTruck.maxWeightCapacity - currTruck.currWeight)
@@ -448,7 +448,7 @@ namespace Amazoom
                 else
                 {
                     serviceNextTruck();
-                    break;         
+                    break;
                 }
             }
 
@@ -470,13 +470,13 @@ namespace Amazoom
         {
             Product[] catalog = ReadCatalog();
             //iterate over every item in the restocking truck and use the restockItem() method to update inventory
-            foreach ((Product,int) product in truck.items)
+            foreach ((Product, int) product in truck.items)
             {
                 // update the catalog with new stock
                 catalog[product.Item1.id].stock += product.Item2;
 
                 Item item = new Item(product.Item1.name, product.Item1.weight, product.Item1.price);
-                for(int i=0; i < product.Item2; i++) // 'item.Item2' represents the quantity of each item within the truck. Call restockItem() for each individual item
+                for (int i = 0; i < product.Item2; i++) // 'item.Item2' represents the quantity of each item within the truck. Call restockItem() for each individual item
                 {
                     restockItem(item);
                 }
@@ -486,7 +486,7 @@ namespace Amazoom
             UpdateCatalog(catalog);
             truck.items.Clear();
             this.restockTruckQueue.Enqueue(truck);
-            
+
 
         }
         // need to update catalog with new stock
@@ -495,15 +495,15 @@ namespace Amazoom
         {
             Product[] currentCatalog = ReadCatalog();
             List<(Product, int)> productToRestock = new List<(Product, int)>();
-            foreach(Product product in currentCatalog)
+            foreach (Product product in currentCatalog)
             {
-                if(product.stock == 0)
+                if (product.stock == 0)
                 {
                     productToRestock.Add((product, this.maxItemStock));
                 }
             }
 
-            if(productToRestock.Count > 0) //check if there are any items that need to be restocked
+            if (productToRestock.Count > 0) //check if there are any items that need to be restocked
             {
                 RestockTruck availableRestockTruck = null;
                 while (availableRestockTruck == null)
@@ -511,7 +511,7 @@ namespace Amazoom
                     if (this.restockTruckQueue.Count > 0) //***need to actually check the restockTruck queue here, which needs to be implemented
                     {
                         availableRestockTruck = this.restockTruckQueue.Dequeue();
-                        break;  
+                        break;
                     }
                     else
                     {
@@ -522,7 +522,7 @@ namespace Amazoom
                 availableRestockTruck.items = productToRestock; //assign a truck to bring in the inventory that needs to be replaced
                 this.dockingQueue.Enqueue(availableRestockTruck);
                 serviceNextTruck();
-               
+
             }
         }
 
@@ -533,7 +533,7 @@ namespace Amazoom
             Product[] updatedCatalog = new Product[currCatalog.Length + 1]; //create new Item[] array with size = previous size + 1 to accomodate new catalogue item
             int newItemId = currCatalog.Length;
             item.id = newItemId;
-            for(int i=0; i < currCatalog.Length; i++) //copy over all existing catalogue items
+            for (int i = 0; i < currCatalog.Length; i++) //copy over all existing catalogue items
             {
                 updatedCatalog[i] = currCatalog[i];
             }
@@ -549,14 +549,14 @@ namespace Amazoom
             string fileName = "../../../inventory.json";
             string jsonString = JsonSerializer.Serialize(newItems);
             File.WriteAllText(fileName, jsonString);
-            
+
         }
         public static List<Item> ReadInventory()
         {
             string fileName = "../../../inventory.json";
             string jsonString = File.ReadAllText(fileName);
             //Item[] items = new Item[2];
-            if(jsonString == "")
+            if (jsonString == "")
             {
                 return new List<Item>();
             }
@@ -576,7 +576,7 @@ namespace Amazoom
             string fileName = "../../../catalogue.json";
             string jsonString = File.ReadAllText(fileName);
             //Item[] items = new Item[2];
-       
+
             Product[] products = JsonSerializer.Deserialize<Product[]>(jsonString);
             return products;
         }
