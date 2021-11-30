@@ -7,12 +7,20 @@ namespace Amazoom
 {
     public class BasicItem
     {
+<<<<<<< HEAD
         public BasicItem(string name, double weight, double price, int id = -1)
+=======
+        public Item(string name, double weight, double price, int id, int shelfId)
+>>>>>>> Added client and server files
         {
             this.name = name;
             this.weight = weight;
             this.price = price;
             this.id = id;
+<<<<<<< HEAD
+=======
+            this.shelfId = shelfId;
+>>>>>>> Added client and server files
         }
         public BasicItem() { }
         public string name { get; set; }
@@ -25,6 +33,24 @@ namespace Amazoom
         public Item(string name, double weight, double price, int id = -1) : base(name, weight, price, id) { }
         public Item() : base() { }
         public int shelfId { get; set; }
+<<<<<<< HEAD
+=======
+    }
+
+    public class Product: Item
+    {
+        public Product(string name, double weight, double price, int id, int shelfId, int stock)
+        {
+            this.name = name;
+            this.weight = weight;
+            this.price = price;
+            this.id = id;
+            this.shelfId = shelfId;
+            this.stock = stock;
+        }
+        public Product() { }
+        public int stock { get; set; }
+>>>>>>> Added client and server files
     }
     public class Product : BasicItem
     {
@@ -158,6 +184,17 @@ namespace Amazoom
             initializeTrucks();
 
             //placeholder item
+<<<<<<< HEAD
+=======
+            //Item newItem = new Item("test", 99,99,1,-1, 5);
+            /*newItem.name = "test";
+            newItem.weight = 99;
+            newItem.price = 99;
+            newItem.id = 1;
+            newItem.shelfId = -1;*/ //shelfId not initially available, set to -1
+
+            //restockItem(newItem);
+>>>>>>> Added client and server files
             this.dockInUse = false;
 
         }
@@ -390,19 +427,31 @@ namespace Amazoom
          * validates an order by ensuring all items are in inventory and stock is available
          * */
         private bool orderIsValid(Order order)
+<<<<<<< HEAD
         {
             // should read catelog and see if we have each thing
             Product[] catalog = ReadCatalog();
             //Item[] inventory = ReadInventory();
+=======
+        { 
+            
+            Product[] inventory = ReadInventory();
+>>>>>>> Added client and server files
 
             //Console.WriteLine(items);
 
             foreach ((Product, int) product in order.products)
             {
+<<<<<<< HEAD
                 int product_id = product.Item1.id;
 
                 int quantity = product.Item2;
                 foreach (Product catalog_product in catalog)
+=======
+                int item_id = item.Item1.id;
+                int quantity = item.Item2;
+                foreach(Product inv_item in inventory)
+>>>>>>> Added client and server files
                 {
                     // idk if we can use id can be used cause each product will have multiple stock items and each of those items has sep id
                     if (product_id == catalog_product.id)
@@ -428,10 +477,14 @@ namespace Amazoom
         // *****what happens if shelf weight is maxed out and have items to restock, stuck in while true loop forever currently
         public void restockItem(Item newItem)
         {
+<<<<<<< HEAD
             List<Item> inventory = ReadInventory();
 
             newItem.id = inventory.Count;
 
+=======
+            Product[] inventory = ReadInventory();
+>>>>>>> Added client and server files
             Random rand = new Random();
             while (true)
             {
@@ -456,7 +509,11 @@ namespace Amazoom
 
         }
 
+<<<<<<< HEAD
         public void loadProcessedOrders(DeliveryTruck currTruck)
+=======
+        public static void UpdateInventory(Product[] newItems)
+>>>>>>> Added client and server files
         {
             //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
             while (processedOrders.Count > 0)
@@ -581,16 +638,25 @@ namespace Amazoom
             File.WriteAllText(fileName, jsonString);
 
         }
+<<<<<<< HEAD
         public static List<Item> ReadInventory()
+=======
+        public static Product[] ReadInventory()
+>>>>>>> Added client and server files
         {
             string fileName = "../../../inventory.json";
             string jsonString = File.ReadAllText(fileName);
             //Item[] items = new Item[2];
+<<<<<<< HEAD
             if (jsonString == "")
             {
                 return new List<Item>();
             }
             List<Item> items = JsonSerializer.Deserialize<List<Item>>(jsonString);
+=======
+
+            Product[] items = JsonSerializer.Deserialize<Product[]>(jsonString);
+>>>>>>> Added client and server files
             return items;
         }
 

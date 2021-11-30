@@ -1,0 +1,16 @@
+[
+  {
+    "name": "test",
+    "weight": 100,
+    "price": 1,
+    "id": 0,
+    "stock": 10
+  },
+  {
+    "name": "test2",
+    "weight": 99,
+    "price": 2,
+    "id": 1,
+    "stock": 5
+  }
+] 
