@@ -106,38 +106,60 @@ namespace Amazoom
 
     public class Truck
     {
-        private List<Order> orders { get; set; }
-        private int id { set; get; }
-        private bool isDeliveryTruck { set; get; }
-        private double weightCapacity { set; get; }
+        //public List<Order> orders { get; set; }
+        public int id { get; set; }
+        public double maxWeightCapacity { get; set; }
+        public double currWeight { get; set; }
 
-        public Truck(double weightCapacity, int id, bool isDeliveryTruck = true)
+        public Truck(double maxWeightCapacity, int id)
         {
-            this.isDeliveryTruck = isDeliveryTruck;
             this.id = id;
-            this.weightCapacity = weightCapacity;
+            this.maxWeightCapacity = maxWeightCapacity;
+            this.currWeight = 0.0;
 
         }
     }
 
+    public class DeliveryTruck: Truck
+    {
+        public List<Order> orders { get; set; }
+        public DeliveryTruck(double maxWeightCapacity, int id) : base(maxWeightCapacity,id)
+        {
+
+        }
+    }
+
+    public class RestockTruck : Truck
+    {
+        public List<(Item, int)> items { get; set; }
+        public RestockTruck(double maxWeightCapacity, int id) : base(maxWeightCapacity, id)
+        {
+
+        }
+    }
 
     // ****    REMEMBER TO CHANGE PUBLIC CLASS MEMBER VARIABLES TO PRIVATE **** //
     public class Computer
     {
         public Shelf[] shelves;
         public Robot[] robots;
+        public Truck[] trucks;
         private readonly int numRobots = 5;
+        private readonly int numTrucks = 4;
+        private readonly double maxTruckCapacity = 1000.0;
         private bool dockInUse { set; get; } //use sempahores when implementing multi-threaded to confirm whether dock is in use
-        private Queue<Order> processedOrders = new Queue<Order>(); //queue to identify which orders are ready for delivery
-        private List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
 
+        //**implement threadsafe queues to allow robots to queue up their orders once processed
+        private Queue<Order> processedOrders = new Queue<Order>(); //queue to identify which orders are ready for delivery, will be loaded into trucks on a FIFO basis
+        private List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
+        private Queue<Truck> truckQueue { get; set; } //queue to track whcih delivery trucks are available and in what order
 
         public Computer()
         {
             //initialize warehouse shelves and robots
             initializeShelves();
             initializeRobots();
-
+            initializeTrucks();
             //placeholder item
             Item newItem = new Item("test", 99,99,1,-1, 5);
             /*newItem.name = "test";
@@ -162,6 +184,21 @@ namespace Amazoom
             for(int i = 0; i < this.numRobots; i++)
             {
                 this.robots[i] = new Robot(0, new int[] { 0, 0 });
+            }
+
+        }
+
+        /*
+         * @return: void
+         * initialize delivery and restocking trucks for our warehouse
+         * */
+        private void initializeTrucks()
+        {
+            //currently initializing 'numTrucks' delivery trucks only. Would also need to later intialize restocking trucks as well
+            this.trucks = new Truck[this.numTrucks];
+            for(int i = 0; i < this.numTrucks; i++)
+            {
+                this.trucks[i] = new DeliveryTruck(this.maxTruckCapacity, i);
             }
 
         }
@@ -259,7 +296,7 @@ namespace Amazoom
                 }
 
                 tempRobot.setActiveStatus(true);
-                foreach ((Item item, int quantity) orderItem in order.items) //figure out whether 'orders' is an array or struct or class
+                foreach ((Item item, int quantity) orderItem in order.items)
                 {
                     Item item = orderItem.item;
                     (Item, Shelf) currItem = (item, shelves[item.shelfId]);
@@ -267,8 +304,9 @@ namespace Amazoom
                     tempRobot.QueueItem(currItem, orderItem.quantity);
 
                 }
-                tempRobot.getOrder();
+                tempRobot.getOrder(); //invoke Robot getORder() method to retrieve all items from warehouse
                 tempRobot.setActiveStatus(false);
+                loadProcessedOrders();
 
 
             }
@@ -332,6 +370,58 @@ namespace Amazoom
 
             }
             UpdateInventory(inventory);
+
+        }
+
+        public void loadProcessedOrders()
+        {
+            while(this.truckQueue.Count > 0) //handle restocking and delivery trucks
+            {
+                Truck truck = this.truckQueue.Peek();
+                if (truck.GetType() == typeof(RestockTruck)) //next truck in queue was a restocking truck, so deal with restocking first
+                {
+                    RestockTruckItems((RestockTruck) this.truckQueue.Dequeue()); //method to handle restocking of items from restocking truck
+                }
+                else
+                {
+                    DeliveryTruck currTruck = (DeliveryTruck) this.truckQueue.Dequeue();
+                    //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
+                    while(this.processedOrders.Count > 0)
+                    {
+                        Order currOrder = this.processedOrders.Peek();
+                        double currOrderWeight = 0.0;
+                        foreach ((Item, int) item in currOrder.items)
+                        {
+                            currOrderWeight += item.Item1.weight;
+                        }
+
+                        if(currOrderWeight <= currTruck.maxWeightCapacity - currTruck.currWeight)
+                        {
+
+                            currTruck.orders.Add(this.processedOrders.Dequeue());
+                            currTruck.currWeight += currOrderWeight;
+                        }
+                        else
+                        {
+                            break; //max cap of truck will be exceeded, do not load more orders
+                        }
+                    }
+                }
+            }
+
+        }
+
+        public void RestockTruckItems(RestockTruck truck)
+        {
+            //iterate over every item in the restocking truck and use the restockItem() method to update inventory
+            foreach ((Item,int) item in truck.items)
+            {
+                for(int i=0; i < item.Item2; i++) // 'item.Item2' represents the quantity of each item within the truck. Call restockItem() for each individual item
+                {
+                    restockItem(item.Item1);
+                }
+
+            }
 
         }
 
