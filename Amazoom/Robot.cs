@@ -41,9 +41,14 @@ namespace Amazoom
          * @return: void
          * move robot to item's location in warehouse and retrieve item. Decrement inventory
          * */
-        public void getOrder()
+        public void getOrder(Order order)
         {
             Item[] inventory = Computer.ReadInventory();
+            for(int i=0; i < order.items.Count; i++)
+            {
+                order.items[i] = (order.items[i].item, 0); //the quantity is reset to 0 for every item in that order
+            }
+
             //process all items of current order in queue
             while(this.robotQueue.Count > 0)
             {
@@ -64,15 +69,27 @@ namespace Amazoom
                         }
                     }
                     this.currentLoad += currItem.Item1.weight;
+                    for (int i = 0; i < order.items.Count; i++)
+                    {
+                        if(order.items[i].item.id == currItem.Item1.id)
+                        {
+                            order.items[i] = (order.items[i].item, order.items[i].quantity+1); //the quantity is incremented for every item retrieved from warehouse
+                            break;
+                        }
+                        
+                    }
 
                 }
                 else
                 {
-                    //move robot to dock, drop stuff off at bin, come back for remaining items
+                    //*****move robot to dock, drop stuff off at bin, come back for remaining items
+                    this.location = new int[2] {0,0}; //this location should be wherever we de-load our items if robot capacity is full
+                    this.currentLoad = 0.0; //reset load
+
                 }
             }
-            //ONCE ORDER COMPLETED, ADD ORDER TO PROCESSED ORDERS IN COMPUTER CLASS
-
+            //order completed, queue item for delivery
+            Computer.processedOrders.Enqueue(order);
             Computer.UpdateInventory(inventory);
             return;
         }

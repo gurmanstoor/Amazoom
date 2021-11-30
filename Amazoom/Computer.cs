@@ -150,8 +150,8 @@ namespace Amazoom
         private bool dockInUse { set; get; } //use sempahores when implementing multi-threaded to confirm whether dock is in use
 
         //**implement threadsafe queues to allow robots to queue up their orders once processed
-        private Queue<Order> processedOrders = new Queue<Order>(); //queue to identify which orders are ready for delivery, will be loaded into trucks on a FIFO basis
-        private List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
+        public static Queue<Order> processedOrders = new Queue<Order>(); //queue to identify which orders are ready for delivery, will be loaded into trucks on a FIFO basis
+        public static List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
         private Queue<Truck> truckQueue { get; set; } //queue to track whcih delivery trucks are available and in what order
 
         public Computer()
@@ -304,7 +304,7 @@ namespace Amazoom
                     tempRobot.QueueItem(currItem, orderItem.quantity);
 
                 }
-                tempRobot.getOrder(); //invoke Robot getORder() method to retrieve all items from warehouse
+                tempRobot.getOrder(order); //invoke Robot getOrder() method to retrieve all items from warehouse
                 tempRobot.setActiveStatus(false);
                 loadProcessedOrders();
 
@@ -386,9 +386,9 @@ namespace Amazoom
                 {
                     DeliveryTruck currTruck = (DeliveryTruck) this.truckQueue.Dequeue();
                     //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
-                    while(this.processedOrders.Count > 0)
+                    while(processedOrders.Count > 0)
                     {
-                        Order currOrder = this.processedOrders.Peek();
+                        Order currOrder = processedOrders.Peek();
                         double currOrderWeight = 0.0;
                         foreach ((Item, int) item in currOrder.items)
                         {
@@ -398,7 +398,7 @@ namespace Amazoom
                         if(currOrderWeight <= currTruck.maxWeightCapacity - currTruck.currWeight)
                         {
 
-                            currTruck.orders.Add(this.processedOrders.Dequeue());
+                            currTruck.orders.Add(processedOrders.Dequeue());
                             currTruck.currWeight += currOrderWeight;
                         }
                         else
