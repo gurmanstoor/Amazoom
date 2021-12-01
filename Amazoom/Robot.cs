@@ -83,7 +83,7 @@ namespace Amazoom
                 else
                 {
                     //*****move robot to dock, drop stuff off at bin, come back for remaining items
-                    this.location = new int[2] {,0}; //this location should be wherever we de-load our items if robot capacity is full
+                    this.location = new int[2] {0,0}; //this location should be wherever we de-load our items if robot capacity is full
                     this.currentLoad = 0.0; //reset load
 
                 }

@@ -7,7 +7,7 @@ namespace Amazoom
 {
     public class Item
     {
-        public Item(string name, double weight, double price, int id, int shelfId, int stock)
+        public Item(string name, double weight, double price, int shelfId = -1, int stock = 0, int id = -1)
         {
             this.name = name;
             this.weight = weight;
@@ -24,6 +24,27 @@ namespace Amazoom
         public int shelfId { get; set; }
         public int stock { get; set; }
     }
+
+    ////used for displaying items to client
+    //public class CatalogueItem: Item
+    //{
+    //    public CatalogueItem(string name, double weight, double price, int id = -1) : base(name, weight, price, id)
+    //    {
+
+    //    }
+    //}
+
+    ////used in our actual inventory, has extra fields like stock and shelfId
+    //public class InventoryItem : Item
+    //{
+    //    public int stock { get; set; }
+    //    public int shelfId { get; set; }
+    //    public InventoryItem(string name, double weight, double price, int shelfId = -1, int stock = 0, int id = -1) : base(name, weight, price, id)
+    //    {
+    //        this.stock = stock;
+    //        this.shelfId = shelfId;
+    //    }
+    //}
 
     public class Shelf
     {
@@ -121,14 +142,17 @@ namespace Amazoom
         public Robot[] robots;
         public Truck[] trucks;
         private readonly int numRobots = 5;
-        private readonly int numTrucks = 4;
+        private readonly int numTrucks = 5;
         private readonly double maxTruckCapacity = 1000.0;
+        private readonly int maxItemStock = 5; //****how do we determine what the max number of stock for each item is? based on shelves and total items??
         private bool dockInUse { set; get; } //use sempahores when implementing multi-threaded to confirm whether dock is in use
 
         //**implement threadsafe queues to allow robots to queue up their orders once processed
         public static Queue<Order> processedOrders = new Queue<Order>(); //queue to identify which orders are ready for delivery, will be loaded into trucks on a FIFO basis
         public static List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
-        private Queue<Truck> truckQueue { get; set; } //queue to track which trucks are waiting to be serviced, could be a restocking or delivery truck
+        private Queue<Truck> dockingQueue { get; set; } //queue to track which trucks are waiting to be serviced, could be a restocking or delivery truck
+        private Queue<RestockTruck> restockTruckQueue { get; set; }
+        private Queue<DeliveryTruck> deliveryTruckQueue { get; set; }
 
         public Computer()
         {
@@ -138,18 +162,6 @@ namespace Amazoom
             initializeTrucks();
 
             //placeholder item
-            Item newItem = new Item("test", 99,99,1,-1, 5);
-<<<<<<< HEAD
-            /*newItem.name = "test";
-            newItem.weight = 99;
-            newItem.price = 99;
-            newItem.id = 1;
-            newItem.shelfId = -1;*/ //shelfId not initially available, set to -1
-
-            //restockItem(newItem);
-=======
-            restockItem(newItem);
->>>>>>> 498a11d (implementation for adding new items to catalogue)
             this.dockInUse = false;
 
         }
@@ -176,10 +188,10 @@ namespace Amazoom
         private void initializeTrucks()
         {
             //currently initializing 'numTrucks' delivery trucks only. Would also need to later intialize restocking trucks as well
-            this.trucks = new Truck[this.numTrucks];
             for(int i = 0; i < this.numTrucks; i++)
             {
-                this.trucks[i] = new DeliveryTruck(this.maxTruckCapacity, i);
+                this.deliveryTruckQueue.Enqueue(new DeliveryTruck(this.maxTruckCapacity, i));
+                this.restockTruckQueue.Enqueue(new RestockTruck(this.maxTruckCapacity, i));
             }
 
         }
@@ -287,12 +299,25 @@ namespace Amazoom
                 }
                 tempRobot.getOrder(order); //invoke Robot getOrder() method to retrieve all items from warehouse
                 tempRobot.setActiveStatus(false);
-                loadProcessedOrders(); // --> replace with "loadOrder()" method which will move the most recent order to the current delivery truck. If truck gets full, pop off queue and start loading next truck
-
-
+                //loadProcessedOrders(); // --> replace with "loadOrder()" method which will move the most recent order to the current delivery truck. If truck gets full, pop off queue and start loading next truck
+                serviceNextTruck();
             }
         }
 
+        private void serviceNextTruck()
+        {
+            if(this.deliveryTruckQueue.Count == this.numTrucks)
+            {
+                this.dockingQueue.Enqueue(this.deliveryTruckQueue.Dequeue());
+            }
+            while (this.dockingQueue.Peek().GetType() == typeof(RestockTruck))
+            {
+                RestockTruckItems((RestockTruck)this.dockingQueue.Dequeue());
+            }
+
+            DeliveryTruck currTruck = (DeliveryTruck) this.dockingQueue.Dequeue();
+            loadProcessedOrders(currTruck);
+        }
         /*
          * @param: an Order to be validated
          * @return: boolean
@@ -354,43 +379,43 @@ namespace Amazoom
 
         }
 
-        public void loadProcessedOrders()
+        public void loadProcessedOrders(DeliveryTruck currTruck)
         {
-            while(this.truckQueue.Count > 0) //handle restocking and delivery trucks
+            //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
+            while (processedOrders.Count > 0)
             {
-                Truck truck = this.truckQueue.Peek();
-                if (truck.GetType() == typeof(RestockTruck)) //next truck in queue was a restocking truck, so deal with restocking first
+                Order currOrder = processedOrders.Peek();
+                double currOrderWeight = 0.0;
+                foreach ((Item, int) item in currOrder.items)
                 {
-                    RestockTruckItems((RestockTruck)this.truckQueue.Dequeue()); //method to handle restocking of items from restocking truck
+                    currOrderWeight += item.Item1.weight;
                 }
-                else if (processedOrders.Count > 0) //check if there are any completed orders waiting to be delivered. Only dequeue next truck if processedOrders > 0
+
+                if (currOrderWeight <= currTruck.maxWeightCapacity - currTruck.currWeight)
                 {
-                    DeliveryTruck currTruck = (DeliveryTruck)this.truckQueue.Dequeue();
-                    //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
-                    while (processedOrders.Count > 0)
-                    {
-                        Order currOrder = processedOrders.Peek();
-                        double currOrderWeight = 0.0;
-                        foreach ((Item, int) item in currOrder.items)
-                        {
-                            currOrderWeight += item.Item1.weight;
-                        }
 
-                        if (currOrderWeight <= currTruck.maxWeightCapacity - currTruck.currWeight)
-                        {
-
-                            currTruck.orders.Add(processedOrders.Dequeue());
-                            currTruck.currWeight += currOrderWeight;
-                        }
-                        else
-                        {
-                            break; //max cap of truck will be exceeded, do not load more orders
-                        }
-                    }
+                    currTruck.orders.Add(processedOrders.Dequeue());
+                    currTruck.currWeight += currOrderWeight;
                 }
-                else break; //no more orders remaining that are processed and ready to be delivered, exit out of loop 
+                else
+                {
+                    serviceNextTruck();
+                    break;         
+                }
             }
 
+            deliverOrders(currTruck);
+
+            //SENDING OUT DELIVERY TRUCK AT THIS POINT. PUT THAT DELIVERY TRUCK BACK IN DELIVERYTRUCKQUEUE AND PUT A NEW DELVIERYTRUCK FROM DELIVERYTRUCKQUEUE INTO DOCKINGQUEUE
+            //****spin a new thread, send in current delivery truck into the thread along with a method which will put that truck at the back of the deliveryTrucks queue after a timer expires
+
+        }
+
+        public void deliverOrders(DeliveryTruck truck)
+        {
+            //****mark which trucks are out for delivery
+            truck.orders.Clear();
+            this.deliveryTruckQueue.Enqueue(truck);
         }
 
         public void RestockTruckItems(RestockTruck truck)
@@ -404,9 +429,48 @@ namespace Amazoom
                 }
 
             }
+            //clear the restock truck items and put back into restockTruckqueue for reuse
+            truck.items.Clear();
+            this.restockTruckQueue.Enqueue(truck);
 
         }
 
+        //**need to also implement logic to check restock truck capacity
+        public void ReadAndReplaceInventoryStock()
+        {
+            Item[] currentInventory = ReadInventory();
+            List<(Item, int)> itemsToRestock = new List<(Item, int)>();
+            foreach(Item item in currentInventory)
+            {
+                if(item.stock == 0)
+                {
+                    itemsToRestock.Add((item, this.maxItemStock));
+                }
+            }
+
+            if(itemsToRestock.Count > 0) //check if there are any items that need to be restocked
+            {
+                RestockTruck availableRestockTruck = null;
+                while (availableRestockTruck == null)
+                {
+                    if (this.restockTruckQueue.Count > 0) //***need to actually check the restockTruck queue here, which needs to be implemented
+                    {
+                        availableRestockTruck = this.restockTruckQueue.Dequeue();
+                        break;  
+                    }
+                    else
+                    {
+                        serviceNextTruck(); //no restock truck available, service the dockingQueue trucks first and wait till restock truck put back into restockTruck queue
+                    }
+                }
+
+                availableRestockTruck.items = itemsToRestock; //assign a truck to bring in the inventory that needs to be replaced
+                this.dockingQueue.Enqueue(availableRestockTruck);
+               
+            }
+        }
+
+        //only adds an item to our catalogue of available items, doesn't actually place anything in the inventory
         public void AddNewCatalogueItem(Item item)
         {
             Item[] currInventory = ReadInventory(); //read in current inventory
@@ -424,19 +488,38 @@ namespace Amazoom
 
         public static void UpdateInventory(Item[] newItems)
         {
-            string fileName = "../../../testing.json";
+            string fileName = "../../../inventory.json";
             string jsonString = JsonSerializer.Serialize(newItems);
             File.WriteAllText(fileName, jsonString);
             
         }
         public static Item[] ReadInventory()
         {
-            string fileName = "../../../testing.json";
+            string fileName = "../../../inventory.json";
             string jsonString = File.ReadAllText(fileName);
             //Item[] items = new Item[2];
 
             Item[] items = JsonSerializer.Deserialize<Item[]>(jsonString);
             return items;
         }
+
+        ////methods to update the catalogue items available for user to order
+
+        //public static void UpdateCatalogue(Item[] newItems)
+        //{
+        //    string fileName = "../../../inventory.json";
+        //    string jsonString = JsonSerializer.Serialize(newItems);
+        //    File.WriteAllText(fileName, jsonString);
+
+        //}
+        //public static Product[] ReadCatalogue()
+        //{
+        //    string fileName = "../../../inventory.json";
+        //    string jsonString = File.ReadAllText(fileName);
+        //    //Item[] items = new Item[2];
+
+        //    Item[] items = JsonSerializer.Deserialize<Item[]>(jsonString);
+        //    return items;
+        //}
     }
 }
