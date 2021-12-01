@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -6,79 +7,110 @@ using System.Linq;
 
 namespace Amazoom
 {
-    public class Server
+    class Server
     {
-        public static int Main(String[] args)
+        private static IPHostEntry host = Dns.GetHostEntry("localhost");
+        private static IPAddress ipAddress = host.AddressList[0];
+        private static readonly Socket serverSocket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+        private static readonly List<Socket> clientSockets = new List<Socket>();
+        private const int BUFFER_SIZE = 2048;
+        private const int PORT = 11000;
+        private static readonly byte[] buffer = new byte[BUFFER_SIZE];
+
+        static void Main()
         {
-            startServer();
-            return 0;
+            Console.Title = "Server";
+            SetupServer();
+            Console.ReadLine(); // When we press enter close everything
+            CloseAllSockets();
         }
 
-        public static void startServer()
+        private static void SetupServer()
         {
-            // Get Host IP Address that is used to establish a connection
-            // In this case, we get one IP address of localhost that is IP : 127.0.0.1
-            // If a host has multiple addresses, you will get a list of addresses
-            IPHostEntry host = Dns.GetHostEntry("localhost");
-            IPAddress ipAddress = host.AddressList[0];
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
+            Console.WriteLine("Setting up server...");
+            serverSocket.Bind(new IPEndPoint(ipAddress, PORT));
+            serverSocket.Listen(1);
+            serverSocket.BeginAccept(AcceptCallback, null);
+            Console.WriteLine("Server setup complete");
+        }
+
+        /// <summary>
+        /// Close all connected client (we do not need to shutdown the server socket as its connections
+        /// are already closed with the clients).
+        /// </summary>
+        private static void CloseAllSockets()
+        {
+            foreach (Socket socket in clientSockets)
+            {
+                socket.Shutdown(SocketShutdown.Both);
+                socket.Close();
+            }
+
+            serverSocket.Close();
+        }
+
+        private static void AcceptCallback(IAsyncResult AR)
+        {
+            Socket socket;
 
             try
             {
-
-                // Create a Socket that will use Tcp protocol
-                Socket listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                // A Socket must be associated with an endpoint using the Bind method
-                listener.Bind(localEndPoint);
-                // Specify how many requests a Socket can listen before it gives Server busy response.
-                // We will listen 10 requests at a time
-                listener.Listen(10);
-
-                Console.WriteLine("Waiting for a connection...");
-                Socket handler = listener.Accept();
-
-                // Incoming data from the client.
-                string data = null;
-                byte[] bytes = null;
-
-                while (true)
-                {
-                    bytes = new byte[1024];
-                    int bytesRec = handler.Receive(bytes);
-                    data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                    if (data.IndexOf("<EOF>") > -1)
-                    {
-                        break;
-                    }
-                }
-
-                Console.WriteLine("Text received : {0}", data);
-                string[] orders = data.Split(";").SkipLast(1).ToArray();
-                int result;
-                Product[] products = Computer.ReadInventory();
-
-                foreach(var num in orders)
-                {
-                    if(int.TryParse(num, out result))
-                    {
-                        products[result].stock = products[result].stock - 1;
-                    }
-                }
-
-                Computer.UpdateInventory(products);
-
-
-                //byte[] msg = Encoding.ASCII.GetBytes(data);
-
-                //handler.Send(msg);
-                handler.Shutdown(SocketShutdown.Both);
-                handler.Close();
+                socket = serverSocket.EndAccept(AR);
             }
-            catch (Exception e)
+            catch (ObjectDisposedException) // I cannot seem to avoid this (on exit when properly closing sockets)
             {
-                Console.WriteLine(e.ToString());
+                return;
             }
+
+            clientSockets.Add(socket);
+            socket.BeginReceive(buffer, 0, BUFFER_SIZE, SocketFlags.None, ReceiveCallback, socket);
+            Console.WriteLine("Client connected, waiting for request...");
+            serverSocket.BeginAccept(AcceptCallback, null);
         }
- 
+
+        private static void ReceiveCallback(IAsyncResult AR)
+        {
+            Socket current = (Socket)AR.AsyncState;
+            int received;
+
+            try
+            {
+                received = current.EndReceive(AR);
+            }
+            catch (SocketException)
+            {
+                Console.WriteLine("Client forcefully disconnected");
+                // Don't shutdown because the socket may be disposed and its disconnected anyway.
+                current.Close();
+                clientSockets.Remove(current);
+                return;
+            }
+
+            byte[] recBuf = new byte[received];
+            Array.Copy(buffer, recBuf, received);
+            string text = Encoding.ASCII.GetString(recBuf);
+            Console.WriteLine("Received Text: " + text);
+
+            string[] orders = text.Split(";").SkipLast(1).ToArray();
+            int result;
+            Product[] products = Computer.ReadInventory();
+
+            foreach (var num in orders)
+            {
+                if (int.TryParse(num, out result))
+                {
+                    products[result].stock = products[result].stock - 1;
+                }
+            }
+
+            Computer.UpdateInventory(products);
+
+            // Always Shutdown before closing
+            current.Shutdown(SocketShutdown.Both);
+            current.Close();
+            clientSockets.Remove(current);
+            Console.WriteLine("Client disconnected");
+        }
     }
 }
+

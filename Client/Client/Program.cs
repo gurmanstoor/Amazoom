@@ -8,6 +8,7 @@ using System.IO;
 
 namespace Amazoom
 {
+
     public class Client
     {
         public class Item
@@ -58,12 +59,12 @@ namespace Amazoom
 
             while (true)
             {
-                if(!int.TryParse(line, out option))
+                if (!int.TryParse(line, out option))
                 {
                     Console.WriteLine("Enter an integer value: ");
                     line = Console.ReadLine();
                 }
-                else if(option > 3 || option < 1)
+                else if (option > 3 || option < 1)
                 {
                     Console.WriteLine("Enter a valid integer (1 to 3): ");
                     line = Console.ReadLine();
@@ -88,7 +89,7 @@ namespace Amazoom
         }
         public static Product[] ReadInventory()
         {
-            string fileName = "../../../testing.json";
+            string fileName = "../../../../../Amazoom/testing.json";
             string jsonString = File.ReadAllText(fileName);
             //Item[] items = new Item[2];
 
@@ -139,13 +140,14 @@ namespace Amazoom
             {
                 addCart(cart);
             }
-            else if(option == 2){
+            else if (option == 2)
+            {
                 viewCart(cart);
             }
             else
             {
                 displayStore(cart);
-            }     
+            }
         }
 
         public static void viewCart(List<int> cart)
@@ -212,7 +214,7 @@ namespace Amazoom
                 int id = Convert.ToInt32(Console.ReadLine());
                 Product[] products = ReadInventory();
 
-                if(products[id].stock > 0)
+                if (products[id].stock > 0)
                 {
                     cart.Add(id);
                     Console.WriteLine("Item added to cart!");
@@ -246,7 +248,7 @@ namespace Amazoom
         {
             Product[] products = ReadInventory();
             double total = 0;
-            foreach(var num in cart)
+            foreach (var num in cart)
             {
                 total += products[num].price;
             }
@@ -282,7 +284,7 @@ namespace Amazoom
                 clientSocket(cart);
             }
             else
-            { 
+            {
                 displayStore(cart);
             }
         }
@@ -314,7 +316,7 @@ namespace Amazoom
 
                 // Connect the socket to the remote endpoint. Catch any errors.
                 try
-                { 
+                {
                     // Connect to Remote EndPoint
                     sender.Connect(remoteEP);
 

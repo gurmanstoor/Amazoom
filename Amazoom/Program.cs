@@ -48,14 +48,18 @@ namespace Amazoom
             ///*Item newItem = new Item("test",100,1,69,-1);
             //Item new2 = new Item("test2", 99, 2, 70, 1);*/
 
+<<<<<<< HEAD
             Computer comp = new Computer();
 >>>>>>> Added client and server files
+=======
+            //Computer comp = new Computer();
+>>>>>>> added working client console app
 
             //int[] itemLocation = new int[] { 1, 2 }; //randomly generated
             //Robot newRobot = new Robot(1, itemLocation);
 
             //Server.startServer();
-            Product[] items = Computer.ReadInventory();
+            //Product[] items = Computer.ReadInventory();
 
             //Client.clientSocket();
 
