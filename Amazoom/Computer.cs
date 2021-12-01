@@ -122,7 +122,7 @@ namespace Amazoom
 
     public class DeliveryTruck: Truck
     {
-        public List<Order> orders { get; set; }
+        public List<Order> orders = new List<Order>();
         public DeliveryTruck(double maxWeightCapacity, int id) : base(maxWeightCapacity,id)
         {
 
@@ -131,7 +131,7 @@ namespace Amazoom
 
     public class RestockTruck : Truck
     {
-        public List<(Item, int)> items { get; set; }
+        public List<(Item, int)> items = new List<(Item, int)>();
         public RestockTruck(double maxWeightCapacity, int id) : base(maxWeightCapacity, id)
         {
 
@@ -168,7 +168,7 @@ namespace Amazoom
             newItem.id = 1;
             newItem.shelfId = -1;*/ //shelfId not initially available, set to -1
 
-            restockItem(newItem);
+            //restockItem(newItem);
             this.dockInUse = false;
 
         }
@@ -361,7 +361,7 @@ namespace Amazoom
                 if (shelves[shelfNumber].currWeight + newItem.weight <= shelves[shelfNumber].maxWeight)
                 {
 
-                    newItem.shelfId = shelves[shelfNumber].id;
+                    inventory[newItem.id].shelfId = shelves[shelfNumber].id;
                     shelves[shelfNumber].currWeight += newItem.weight;
                     shelves[shelfNumber].items.Add(newItem);
                     inventory[newItem.id].stock += 1;
