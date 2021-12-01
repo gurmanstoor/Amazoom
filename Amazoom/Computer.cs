@@ -5,14 +5,6 @@ using System.IO;
 using System.Threading;
 namespace Amazoom
 {
-    /* public struct Item
-     {
-         public string name;
-         public double weight;
-         public double price;
-         public int id;
-         public int shelfId;
-     }*/
     public class Item
     {
         public Item(string name, double weight, double price, int id, int shelfId, int stock)
@@ -33,15 +25,6 @@ namespace Amazoom
         public int stock { get; set; }
     }
 
-    /*public struct Shelf
-    {
-        public List<Item> items;
-        public ShelfLocation shelfLocation;
-        public int id;
-        public double currWeight;
-        public double maxWeight;
-
-    }*/
     public class Shelf
     {
         public Shelf(List<Item> items, ShelfLocation shelfLocation, int id, double currWeight, double maxWeight)
@@ -81,13 +64,6 @@ namespace Amazoom
         public string side { get; set; }
         public int height { get; set; }
     }*/
-
-    /* public struct Order
-     {
-         public int id;
-         public List<Item> items;
-         public string status;
-     }*/
 
     public class Order
     {
@@ -152,16 +128,18 @@ namespace Amazoom
         //**implement threadsafe queues to allow robots to queue up their orders once processed
         public static Queue<Order> processedOrders = new Queue<Order>(); //queue to identify which orders are ready for delivery, will be loaded into trucks on a FIFO basis
         public static List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
-        private Queue<Truck> truckQueue { get; set; } //queue to track whcih delivery trucks are available and in what order
+        private Queue<Truck> truckQueue { get; set; } //queue to track which trucks are waiting to be serviced, could be a restocking or delivery truck
 
         public Computer()
         {
-            //initialize warehouse shelves and robots
+            //initialize warehouse shelves, robots, and trucks
             initializeShelves();
             initializeRobots();
             initializeTrucks();
+
             //placeholder item
             Item newItem = new Item("test", 99,99,1,-1, 5);
+<<<<<<< HEAD
             /*newItem.name = "test";
             newItem.weight = 99;
             newItem.price = 99;
@@ -169,6 +147,9 @@ namespace Amazoom
             newItem.shelfId = -1;*/ //shelfId not initially available, set to -1
 
             //restockItem(newItem);
+=======
+            restockItem(newItem);
+>>>>>>> 498a11d (implementation for adding new items to catalogue)
             this.dockInUse = false;
 
         }
@@ -306,7 +287,7 @@ namespace Amazoom
                 }
                 tempRobot.getOrder(order); //invoke Robot getOrder() method to retrieve all items from warehouse
                 tempRobot.setActiveStatus(false);
-                loadProcessedOrders();
+                loadProcessedOrders(); // --> replace with "loadOrder()" method which will move the most recent order to the current delivery truck. If truck gets full, pop off queue and start loading next truck
 
 
             }
@@ -380,13 +361,13 @@ namespace Amazoom
                 Truck truck = this.truckQueue.Peek();
                 if (truck.GetType() == typeof(RestockTruck)) //next truck in queue was a restocking truck, so deal with restocking first
                 {
-                    RestockTruckItems((RestockTruck) this.truckQueue.Dequeue()); //method to handle restocking of items from restocking truck
+                    RestockTruckItems((RestockTruck)this.truckQueue.Dequeue()); //method to handle restocking of items from restocking truck
                 }
-                else
+                else if (processedOrders.Count > 0) //check if there are any completed orders waiting to be delivered. Only dequeue next truck if processedOrders > 0
                 {
-                    DeliveryTruck currTruck = (DeliveryTruck) this.truckQueue.Dequeue();
+                    DeliveryTruck currTruck = (DeliveryTruck)this.truckQueue.Dequeue();
                     //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
-                    while(processedOrders.Count > 0)
+                    while (processedOrders.Count > 0)
                     {
                         Order currOrder = processedOrders.Peek();
                         double currOrderWeight = 0.0;
@@ -395,7 +376,7 @@ namespace Amazoom
                             currOrderWeight += item.Item1.weight;
                         }
 
-                        if(currOrderWeight <= currTruck.maxWeightCapacity - currTruck.currWeight)
+                        if (currOrderWeight <= currTruck.maxWeightCapacity - currTruck.currWeight)
                         {
 
                             currTruck.orders.Add(processedOrders.Dequeue());
@@ -407,6 +388,7 @@ namespace Amazoom
                         }
                     }
                 }
+                else break; //no more orders remaining that are processed and ready to be delivered, exit out of loop 
             }
 
         }
@@ -422,6 +404,21 @@ namespace Amazoom
                 }
 
             }
+
+        }
+
+        public void AddNewCatalogueItem(Item item)
+        {
+            Item[] currInventory = ReadInventory(); //read in current inventory
+            Item[] updatedInventory = new Item[currInventory.Length + 1]; //create new Item[] array with size = previous size + 1 to accomodate new catalogue item
+            int newItemId = currInventory.Length;
+            item.id = newItemId;
+            for(int i=0; i < currInventory.Length; i++) //copy over all existing catalogue items
+            {
+                updatedInventory[i] = currInventory[i];
+            }
+            updatedInventory[updatedInventory.Length - 1] = item; //add the newest item
+            UpdateInventory(updatedInventory); //update the inventory JSON file
 
         }
 
