@@ -6,27 +6,24 @@ namespace Amazoom
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("TEST STARTED");
             Computer comp = new Computer();
             RestockTruck truck = new RestockTruck(1000.0, 0);
             string[] names = new string[5] { "a", "b", "c", "d", "e" };
-            Item[] items = new Item[5];
             for(int i = 0; i < 5; i++)
             {
-                items[i]= new Item(names[i], 100, 99, i, -1, 0);
+                comp.AddNewCatalogueItem(new Item(names[i], 100, 99)); //adding new items to our inventory, not specifying item id, stock, or shelfId
+                //items[i]= new Item(names[i], 100, 99, i, -1, 0);
                 //truck.items.Add((item, 5));
             }
-            Computer.UpdateInventory(items);
+            //Computer.UpdateInventory(items); //initialize our inventory JSON file with the 5 items above with stock = 0 for each item
 
-            for (int i = 0; i < 5; i++)
-            {
-                Item item = new Item(names[i], 100, 99, i, -1, 0);
-                truck.items.Add((item, 5));
-            }
-
-            comp.RestockTruckItems(truck);
-            /*Item newItem = new Item("test",100,1,69,-1);
-            Item new2 = new Item("test2", 99, 2, 70, 1);*/
+            //for (int i = 0; i < 5; i++)
+            //{
+            //    Item item = new Item(names[i], 100, 99, i, -1, 0); //when restocking, would first read our current inventory to determine which items we need to restock
+            //    truck.items.Add((item, 5));
+            //}
+            comp.ReadAndReplaceInventoryStock();
             Item[] returned = Computer.ReadInventory();
             Console.WriteLine("test complete");
             

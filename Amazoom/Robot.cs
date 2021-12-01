@@ -94,6 +94,7 @@ namespace Amazoom
             return;
         }
 
+
         //setters and getters
         public void setActiveStatus(bool isActive)
         {
