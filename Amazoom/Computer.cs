@@ -7,27 +7,12 @@ namespace Amazoom
 {
     public class BasicItem
     {
-<<<<<<< HEAD
-<<<<<<< HEAD
         public BasicItem(string name, double weight, double price, int id = -1)
-=======
-        public Item(string name, double weight, double price, int id, int shelfId)
->>>>>>> Added client and server files
-=======
-        public BasicItem(string name, double weight, double price, int id = -1)
->>>>>>> merging with main
         {
             this.name = name;
             this.weight = weight;
             this.price = price;
             this.id = id;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-            this.shelfId = shelfId;
->>>>>>> Added client and server files
-=======
->>>>>>> merging with main
         }
         public BasicItem() { }
         public string name { get; set; }
@@ -40,25 +25,13 @@ namespace Amazoom
         public Item(string name, double weight, double price, int id = -1) : base(name, weight, price, id) { }
         public Item() : base() { }
         public int shelfId { get; set; }
-<<<<<<< HEAD
-=======
     }
     public class Product : BasicItem
     {
         public Product(string name, double weight, double price, int id = -1) : base(name, weight, price, id) { }
         public Product() : base() { }
         public int stock { get; set; }
->>>>>>> Added client and server files
     }
-<<<<<<< HEAD
-    public class Product : BasicItem
-    {
-        public Product(string name, double weight, double price, int id = -1) : base(name, weight, price, id) { }
-        public Product() : base() { }
-        public int stock { get; set; }
-    }
-=======
->>>>>>> merging with main
 
     public class Shelf
     {
@@ -170,39 +143,12 @@ namespace Amazoom
 
         public Computer()
         {
-<<<<<<< HEAD
-<<<<<<< HEAD
             //initialize warehouse shelves, robots, and trucks
-=======
-            Console.WriteLine("------------------------------------");
-            Console.WriteLine("------------------------------------");
-            Console.WriteLine("|    Initializing New Warehouse    |");
-            Console.WriteLine("------------------------------------");
-            Console.WriteLine("------------------------------------");
-            //initialize warehouse shelves and robots
->>>>>>> Temp push
-=======
-            //initialize warehouse shelves, robots, and trucks
->>>>>>> merging with main
             initializeShelves();
             initializeRobots();
             initializeTrucks();
 
             //placeholder item
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-            //Item newItem = new Item("test", 99,99,1,-1, 5);
-            /*newItem.name = "test";
-            newItem.weight = 99;
-            newItem.price = 99;
-            newItem.id = 1;
-            newItem.shelfId = -1;*/ //shelfId not initially available, set to -1
-
-            //restockItem(newItem);
->>>>>>> Added client and server files
-=======
->>>>>>> merging with main
             this.dockInUse = false;
 
         }
@@ -237,21 +183,6 @@ namespace Amazoom
 
         }
 
-        /*
-         * @return: void
-         * initialize delivery and restocking trucks for our warehouse
-         * */
-        private void initializeTrucks()
-        {
-            //currently initializing 'numTrucks' delivery trucks only. Would also need to later intialize restocking trucks as well
-            for (int i = 0; i < this.numTrucks; i++)
-            {
-                this.deliveryTruckQueue.Enqueue(new DeliveryTruck(this.maxTruckCapacity, i));
-                this.restockTruckQueue.Enqueue(new RestockTruck(this.maxTruckCapacity, i));
-            }
-
-        }
-
 
         /*
          * @return: void
@@ -259,36 +190,10 @@ namespace Amazoom
          * */
         private void initializeShelves()
         {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> merging with main
             int numRows = 3;
             int numCols = 4;
             int height = 2;
             int numShelves = (numCols - 1) * (numRows - 2) * height * 2;
-<<<<<<< HEAD
-=======
-=======
->>>>>>> Temp push
-            Console.WriteLine("How many rows does your warehouse have? ");
-            int numRows = Convert.ToInt32(Console.ReadLine());
-            Console.WriteLine("How many columns does your warehouse have? ");
-            int numCols = Convert.ToInt32(Console.ReadLine());
-            Console.WriteLine("What is the height of your sheving unit? ");
-            int height = Convert.ToInt32(Console.ReadLine());
-
-            int numShelves = (numCols-1) * (numRows - 2) * height*2;
-<<<<<<< HEAD
->>>>>>> Resolved conflict
-=======
-            int numShelves = (numCols - 1) * (numRows - 2) * height;
->>>>>>> Temp push
-=======
->>>>>>> computer.cs conflict resolved
-=======
->>>>>>> merging with main
 
             this.shelves = new Shelf[numShelves];
             int shelfNum = 0;
@@ -346,8 +251,6 @@ namespace Amazoom
             loadShelves(); //loading shelves with initial inventory
         }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
         public void loadShelves()
         {
             List<Item> currInventory = ReadInventory();
@@ -356,23 +259,6 @@ namespace Amazoom
                 shelves[item.shelfId].items.Add(item);
             }
         }
-=======
-        public void recieveOrder(List<(Product product, int quantity)> order, int orderID)
-=======
-        public void loadShelves()
->>>>>>> merging with main
-        {
-            List<Item> currInventory = ReadInventory();
-            foreach (Item item in currInventory)
-            {
-                shelves[item.shelfId].items.Add(item);
-            }
-        }
-<<<<<<< HEAD
-
->>>>>>> updated server to send orders to warehouse
-=======
->>>>>>> merging with main
         /*
          * @param: an Order to be fulfilled by a robot
          * @return: void
@@ -474,43 +360,19 @@ namespace Amazoom
          * validates an order by ensuring all items are in inventory and stock is available
          * */
         private bool orderIsValid(Order order)
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> merging with main
         {
             // should read catelog and see if we have each thing
             Product[] catalog = ReadCatalog();
             //Item[] inventory = ReadInventory();
-<<<<<<< HEAD
-=======
-        { 
-            
-            Product[] inventory = ReadInventory();
->>>>>>> Added client and server files
-=======
->>>>>>> merging with main
 
             //Console.WriteLine(items);
 
             foreach ((Product, int) product in order.products)
             {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> merging with main
                 int product_id = product.Item1.id;
 
                 int quantity = product.Item2;
                 foreach (Product catalog_product in catalog)
-<<<<<<< HEAD
-=======
-                int item_id = item.Item1.id;
-                int quantity = item.Item2;
-                foreach(Product inv_item in inventory)
->>>>>>> Added client and server files
-=======
->>>>>>> merging with main
                 {
                     // idk if we can use id can be used cause each product will have multiple stock items and each of those items has sep id
                     if (product_id == catalog_product.id)
@@ -536,20 +398,10 @@ namespace Amazoom
         // *****what happens if shelf weight is maxed out and have items to restock, stuck in while true loop forever currently
         public void restockItem(Item newItem)
         {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> merging with main
             List<Item> inventory = ReadInventory();
 
             newItem.id = inventory.Count;
 
-<<<<<<< HEAD
-=======
-            Product[] inventory = ReadInventory();
->>>>>>> Added client and server files
-=======
->>>>>>> merging with main
             Random rand = new Random();
             while (true)
             {
@@ -574,115 +426,6 @@ namespace Amazoom
 
         }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        public void loadProcessedOrders(DeliveryTruck currTruck)
-=======
-        public static void UpdateInventory(Product[] newItems)
->>>>>>> Added client and server files
-        {
-            //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
-            while (processedOrders.Count > 0)
-            {
-                Order currOrder = processedOrders.Peek();
-                double currOrderWeight = 0.0;
-
-                foreach ((Product, int) item in currOrder.products)
-                {
-                    currOrderWeight += ((item.Item1.weight) * item.Item2);  // order has multiple quantities
-                }
-
-                if (currOrderWeight <= currTruck.maxWeightCapacity - currTruck.currWeight)
-                {
-
-                    currTruck.orders.Add(processedOrders.Dequeue());
-                    currTruck.currWeight += currOrderWeight;
-                }
-                else
-                {
-                    serviceNextTruck();
-                    break;
-                }
-            }
-
-            deliverOrders(currTruck);
-
-            //SENDING OUT DELIVERY TRUCK AT THIS POINT. PUT THAT DELIVERY TRUCK BACK IN DELIVERYTRUCKQUEUE AND PUT A NEW DELVIERYTRUCK FROM DELIVERYTRUCKQUEUE INTO DOCKINGQUEUE
-            //****spin a new thread, send in current delivery truck into the thread along with a method which will put that truck at the back of the deliveryTrucks queue after a timer expires
-
-        }
-
-        public void deliverOrders(DeliveryTruck truck)
-        {
-            //****mark which trucks are out for delivery
-            truck.orders.Clear();
-            this.deliveryTruckQueue.Enqueue(truck);
-        }
-
-        public void RestockTruckItems(RestockTruck truck)
-        {
-            Product[] catalog = ReadCatalog();
-            //iterate over every item in the restocking truck and use the restockItem() method to update inventory
-            foreach ((Product, int) product in truck.items)
-            {
-                // update the catalog with new stock
-                catalog[product.Item1.id].stock += product.Item2;
-
-                Item item = new Item(product.Item1.name, product.Item1.weight, product.Item1.price);
-                for (int i = 0; i < product.Item2; i++) // 'item.Item2' represents the quantity of each item within the truck. Call restockItem() for each individual item
-                {
-                    restockItem(item);
-                }
-
-            }
-            //clear the restock truck items and put back into restockTruckqueue for reuse
-            UpdateCatalog(catalog);
-            truck.items.Clear();
-            this.restockTruckQueue.Enqueue(truck);
-
-
-        }
-        // need to update catalog with new stock
-        //**need to also implement logic to check restock truck capacity
-        public void ReadAndReplaceCatalogStock()
-        {
-            Product[] currentCatalog = ReadCatalog();
-            List<(Product, int)> productToRestock = new List<(Product, int)>();
-            foreach (Product product in currentCatalog)
-            {
-                if (product.stock == 0)
-                {
-                    productToRestock.Add((product, this.maxItemStock));
-                }
-            }
-
-            if (productToRestock.Count > 0) //check if there are any items that need to be restocked
-            {
-                RestockTruck availableRestockTruck = null;
-                while (availableRestockTruck == null)
-                {
-                    if (this.restockTruckQueue.Count > 0) //***need to actually check the restockTruck queue here, which needs to be implemented
-                    {
-                        availableRestockTruck = this.restockTruckQueue.Dequeue();
-                        break;
-                    }
-                    else
-                    {
-                        serviceNextTruck(); //no restock truck available, service the dockingQueue trucks first and wait till restock truck put back into restockTruck queue
-                    }
-                }
-
-                availableRestockTruck.items = productToRestock; //assign a truck to bring in the inventory that needs to be replaced
-                this.dockingQueue.Enqueue(availableRestockTruck);
-                serviceNextTruck();
-
-            }
-        }
-
-        //only adds an item to our catalogue of available items, doesn't actually place anything in the inventory
-        public void AddNewCatalogItem(Product item)
-        {
-=======
         public void loadProcessedOrders(DeliveryTruck currTruck)
         {
             //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
@@ -786,7 +529,6 @@ namespace Amazoom
         //only adds an item to our catalogue of available items, doesn't actually place anything in the inventory
         public void AddNewCatalogItem(Product item)
         {
->>>>>>> merging with main
             Product[] currCatalog = ReadCatalog(); //read in current inventory
             Product[] updatedCatalog = new Product[currCatalog.Length + 1]; //create new Item[] array with size = previous size + 1 to accomodate new catalogue item
             int newItemId = currCatalog.Length;
@@ -809,35 +551,16 @@ namespace Amazoom
             File.WriteAllText(fileName, jsonString);
 
         }
-<<<<<<< HEAD
-<<<<<<< HEAD
         public static List<Item> ReadInventory()
-=======
-        public static Product[] ReadInventory()
->>>>>>> Added client and server files
-=======
-        public static List<Item> ReadInventory()
->>>>>>> merging with main
         {
             string fileName = "../../../inventory.json";
             string jsonString = File.ReadAllText(fileName);
             //Item[] items = new Item[2];
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> merging with main
             if (jsonString == "")
             {
                 return new List<Item>();
             }
             List<Item> items = JsonSerializer.Deserialize<List<Item>>(jsonString);
-<<<<<<< HEAD
-=======
-
-            Product[] items = JsonSerializer.Deserialize<Product[]>(jsonString);
->>>>>>> Added client and server files
-=======
->>>>>>> merging with main
             return items;
         }
 
