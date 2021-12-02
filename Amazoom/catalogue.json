@@ -1,27 +1,27 @@
 [
   {
-    "stock": 0,
+    "stock": 5,
     "name": "a",
     "weight": 100,
     "price": 99,
     "id": 0
   },
   {
-    "stock": 1,
+    "stock": 5,
     "name": "b",
     "weight": 100,
     "price": 99,
     "id": 1
   },
   {
-    "stock": 2,
+    "stock": 5,
     "name": "c",
     "weight": 100,
     "price": 99,
     "id": 2
   },
   {
-    "stock": 3,
+    "stock": 5,
     "name": "d",
     "weight": 100,
     "price": 99,

@@ -5,54 +5,33 @@ using System.IO;
 using System.Threading;
 namespace Amazoom
 {
-    public class BasicShinda
+    public class BasicItem
     {
-        public BasicShinda(string name, double weight, double price, int id = -1)
+        public BasicItem(string name, double weight, double price, int id = -1)
         {
             this.name = name;
             this.weight = weight;
             this.price = price;
             this.id = id;
         }
-        public BasicShinda() { }
+        public BasicItem() { }
         public string name { get; set; }
         public double weight { get; set; }
         public double price { get; set; }
         public int id { get; set; }
     }
-    public class Item :BasicShinda
+    public class Item : BasicItem
     {
         public Item(string name, double weight, double price, int id = -1) : base(name, weight, price, id) { }
         public Item() : base() { }
         public int shelfId { get; set; }
     }
-    public class Product : BasicShinda
+    public class Product : BasicItem
     {
         public Product(string name, double weight, double price, int id = -1) : base(name, weight, price, id) { }
         public Product() : base() { }
         public int stock { get; set; }
     }
-
-    ////used for displaying items to client
-    //public class CatalogueItem: Item
-    //{
-    //    public CatalogueItem(string name, double weight, double price, int id = -1) : base(name, weight, price, id)
-    //    {
-
-    //    }
-    //}
-
-    ////used in our actual inventory, has extra fields like stock and shelfId
-    //public class InventoryItem : Item
-    //{
-    //    public int stock { get; set; }
-    //    public int shelfId { get; set; }
-    //    public InventoryItem(string name, double weight, double price, int shelfId = -1, int stock = 0, int id = -1) : base(name, weight, price, id)
-    //    {
-    //        this.stock = stock;
-    //        this.shelfId = shelfId;
-    //    }
-    //}
 
     public class Shelf
     {
@@ -269,8 +248,17 @@ namespace Amazoom
 
                 }
             }
+            loadShelves(); //loading shelves with initial inventory
         }
 
+        public void loadShelves()
+        {
+            List<Item> currInventory = ReadInventory();
+            foreach(Item item in currInventory)
+            {
+                shelves[item.shelfId].items.Add(item);
+            }
+        }
         /*
          * @param: an Order to be fulfilled by a robot
          * @return: void
