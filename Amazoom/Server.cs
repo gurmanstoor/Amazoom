@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -96,50 +97,62 @@ namespace Amazoom
             string text = Encoding.ASCII.GetString(recBuf);
             Console.WriteLine("Received Text: " + text);
 
-            string[] orders = text.Split(";").SkipLast(1).ToArray();
-            int result;
-            Product[] products = Computer.ReadInventory();
-            List<(Product, int)> orderItems = new List<(Product, int)>(); 
-
-            for(int i = 0; i < orders.Length; i++)
+            if(text.ToLower() == "get json")
             {
-                if (int.TryParse(orders[i], out result))
-                {
-                    products[result].stock = products[result].stock - 1;
+                string fileName = "../../../testing.json";
+                string jsonString = File.ReadAllText(fileName);
 
-                    if(i == 0)
+                Console.WriteLine("Text is a get json request");
+                byte[] data = Encoding.ASCII.GetBytes(jsonString);
+                current.Send(data);
+                Console.WriteLine("json sent to client");
+
+                //Product[] items = JsonSerializer.Deserialize<Product[]>(jsonString);
+            }
+            else
+            {
+                string[] orders = text.Split(";").ToArray();
+                int result;
+                Product[] products = Computer.ReadInventory();
+                List<(Product, int)> orderItems = new List<(Product, int)>();
+
+                for (int i = 0; i < orders.Length; i++)
+                {
+                    if (int.TryParse(orders[i], out result))
                     {
-                        orderItems.Add((products[i], 1));
-                    }
-                    else
-                    {
-                        for(int j = 0; j < orderItems.Count(); j++)
+                        products[result].stock = products[result].stock - 1;
+
+                        if (i == 0)
                         {
-                            if (orderItems[j].Item1.name == products[result].name)
+                            orderItems.Add((products[i], 1));
+                        }
+                        else
+                        {
+                            for (int j = 0; j < orderItems.Count(); j++)
                             {
-                                orderItems[j] = (orderItems[j].Item1, orderItems[j].Item2 + 1);
-                            }
-                            else
-                            {
-                                orderItems.Add((products[result], 1));
+                                if (orderItems[j].Item1.name == products[result].name)
+                                {
+                                    orderItems[j] = (orderItems[j].Item1, orderItems[j].Item2 + 1);
+                                }
+                                else
+                                {
+                                    orderItems.Add((products[result], 1));
+                                }
                             }
                         }
                     }
                 }
+                Computer.UpdateInventory(products);
+                Console.WriteLine("Sending order to warehouse");
+                warehouse1.recieveOrder(orderItems, orderID);
             }
 
-            Computer.UpdateInventory(products);
 
             // Always Shutdown before closing
             current.Shutdown(SocketShutdown.Both);
             current.Close();
             clientSockets.Remove(current);
             Console.WriteLine("Client disconnected");
-
-            Console.WriteLine("Sending order to warehouse");
-
-            warehouse1.recieveOrder(orderItems, orderID);
-
         }
     }
 }
