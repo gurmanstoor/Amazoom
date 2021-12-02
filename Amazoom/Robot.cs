@@ -8,7 +8,7 @@ namespace Amazoom
     {
         private int id;
         private double currBatteryLevel;
-        private double maxLoadingCap = 100.0;
+        private double maxLoadingCap = 300.0;
         private double currentLoad = 0.0;
         private int[] location;
         private bool isActive = false;
@@ -43,19 +43,15 @@ namespace Amazoom
          * */
         public void getOrder(Order order)
         {
-            //Item[] inventory = Computer.ReadInventory();
-            /*for(int i=0; i < order.items.Count; i++)
-            {
-                order.items[i] = (order.items[i].item, 0); //the quantity is reset to 0 for every item in that order
-            }*/
-
+            List<Item> currInventory = Computer.ReadInventory();
             //process all items of current order in queue
             while(this.robotQueue.Count > 0)
             {
-                (Item, Shelf) currItem = this.robotQueue.Dequeue();
+                (Item, Shelf) currItem = this.robotQueue.Peek();
                 Shelf currShelf = currItem.Item2;
                 if(this.currentLoad + currItem.Item1.weight <= this.maxLoadingCap)
                 {
+                    this.robotQueue.Dequeue();
                     this.location = currShelf.shelfLocation.location; //location of a specific item within our warehouse grid
                     for (int i = 0; i < currShelf.items.Count; i++) //iterate over items in that shelf and remove item being processed
                     {
@@ -63,23 +59,20 @@ namespace Amazoom
                         {
                             currShelf.items.RemoveAt(i);
                             currShelf.currWeight -= currItem.Item1.weight;
-                            //** decrement inventory as well for removed item **
+                            //int idx = currInventory.FindIndex(a => a == currItem.Item1);
+                            for(int j=0; j < currInventory.Count; j++)
+                            {
+                                if(currInventory[j].id == currItem.Item1.id)
+                                {
+                                    currInventory.RemoveAt(j);
+                                    break;
+                                }
+                            }
+                            
 
-                            //inventory[currItem.Item1.id].stock -= 1; 
-                            // ** server is handling the stock changes for an order.
                         }
                     }
                     this.currentLoad += currItem.Item1.weight;
-                    /*for (int i = 0; i < order.items.Count; i++)
-                    {
-                        if(order.items[i].item.id == currItem.Item1.id)
-                        {
-                            order.items[i] = (order.items[i].item, order.items[i].quantity+1); //the quantity is incremented for every item retrieved from warehouse
-                            break;
-                        }
-                        
-                    }*/
-
                 }
                 else
                 {
@@ -91,7 +84,7 @@ namespace Amazoom
             }
             //order completed, queue item for delivery
             Computer.processedOrders.Enqueue(order);
-            //Computer.UpdateInventory(inventory);
+            Computer.UpdateInventory(currInventory);
             return;
         }
 
