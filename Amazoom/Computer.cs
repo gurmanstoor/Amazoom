@@ -318,6 +318,7 @@ namespace Amazoom
             loadShelves(); //loading shelves with initial inventory
         }
 
+<<<<<<< HEAD
         public void loadShelves()
         {
             List<Item> currInventory = ReadInventory();
@@ -326,6 +327,15 @@ namespace Amazoom
                 shelves[item.shelfId].items.Add(item);
             }
         }
+=======
+        public void recieveOrder(List<(Product product, int quantity)> order, int orderID)
+        {
+
+
+            return;
+        }
+
+>>>>>>> updated server to send orders to warehouse
         /*
          * @param: an Order to be fulfilled by a robot
          * @return: void

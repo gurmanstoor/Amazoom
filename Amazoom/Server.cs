@@ -16,6 +16,9 @@ namespace Amazoom
         private const int BUFFER_SIZE = 2048;
         private const int PORT = 11000;
         private static readonly byte[] buffer = new byte[BUFFER_SIZE];
+        private static int orderID = 0;
+
+        private static Computer warehouse1 = new Computer();
 
         static void Main()
         {
@@ -86,6 +89,8 @@ namespace Amazoom
                 return;
             }
 
+            orderID++;
+
             byte[] recBuf = new byte[received];
             Array.Copy(buffer, recBuf, received);
             string text = Encoding.ASCII.GetString(recBuf);
@@ -94,12 +99,32 @@ namespace Amazoom
             string[] orders = text.Split(";").SkipLast(1).ToArray();
             int result;
             Product[] products = Computer.ReadInventory();
+            List<(Product, int)> orderItems = new List<(Product, int)>(); 
 
-            foreach (var num in orders)
+            for(int i = 0; i < orders.Length; i++)
             {
-                if (int.TryParse(num, out result))
+                if (int.TryParse(orders[i], out result))
                 {
                     products[result].stock = products[result].stock - 1;
+
+                    if(i == 0)
+                    {
+                        orderItems.Add((products[i], 1));
+                    }
+                    else
+                    {
+                        for(int j = 0; j < orderItems.Count(); j++)
+                        {
+                            if (orderItems[j].Item1.name == products[result].name)
+                            {
+                                orderItems[j] = (orderItems[j].Item1, orderItems[j].Item2 + 1);
+                            }
+                            else
+                            {
+                                orderItems.Add((products[result], 1));
+                            }
+                        }
+                    }
                 }
             }
 
@@ -110,6 +135,11 @@ namespace Amazoom
             current.Close();
             clientSockets.Remove(current);
             Console.WriteLine("Client disconnected");
+
+            Console.WriteLine("Sending order to warehouse");
+
+            warehouse1.recieveOrder(orderItems, orderID);
+
         }
     }
 }
