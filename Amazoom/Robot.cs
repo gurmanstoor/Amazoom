@@ -43,11 +43,11 @@ namespace Amazoom
          * */
         public void getOrder(Order order)
         {
-            Item[] inventory = Computer.ReadInventory();
-            for(int i=0; i < order.items.Count; i++)
+            //Item[] inventory = Computer.ReadInventory();
+            /*for(int i=0; i < order.items.Count; i++)
             {
                 order.items[i] = (order.items[i].item, 0); //the quantity is reset to 0 for every item in that order
-            }
+            }*/
 
             //process all items of current order in queue
             while(this.robotQueue.Count > 0)
@@ -65,11 +65,12 @@ namespace Amazoom
                             currShelf.currWeight -= currItem.Item1.weight;
                             //** decrement inventory as well for removed item **
 
-                            inventory[currItem.Item1.id].stock -= 1;
+                            //inventory[currItem.Item1.id].stock -= 1; 
+                            // ** server is handling the stock changes for an order.
                         }
                     }
                     this.currentLoad += currItem.Item1.weight;
-                    for (int i = 0; i < order.items.Count; i++)
+                    /*for (int i = 0; i < order.items.Count; i++)
                     {
                         if(order.items[i].item.id == currItem.Item1.id)
                         {
@@ -77,7 +78,7 @@ namespace Amazoom
                             break;
                         }
                         
-                    }
+                    }*/
 
                 }
                 else
@@ -90,7 +91,7 @@ namespace Amazoom
             }
             //order completed, queue item for delivery
             Computer.processedOrders.Enqueue(order);
-            Computer.UpdateInventory(inventory);
+            //Computer.UpdateInventory(inventory);
             return;
         }
 
