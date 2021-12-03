@@ -99,7 +99,7 @@ namespace Amazoom
 
             if (text.ToLower() == "get json")
             {
-                string fileName = "../../../testing.json";
+                string fileName = "../../../catalogue.json";
                 string jsonString = File.ReadAllText(fileName);
 
                 Console.WriteLine("Text is a get json request");
@@ -113,7 +113,7 @@ namespace Amazoom
             {
                 string[] orders = text.Split(";").ToArray();
                 int result;
-                Product[] products = Computer.ReadInventory();
+                Product[] products = Computer.ReadCatalog();
                 List<(Product, int)> orderItems = new List<(Product, int)>();
 
                 for (int i = 0; i < orders.Length; i++)
@@ -142,9 +142,9 @@ namespace Amazoom
                         }
                     }
                 }
-                Computer.UpdateInventory(products);
+                Computer.UpdateCatalog(products);
                 Console.WriteLine("Sending order to warehouse");
-                warehouse1.recieveOrder(orderItems, orderID);
+                warehouse1.fulfillOrder(new Order(orderID, orderItems, ""));
             }
 
 

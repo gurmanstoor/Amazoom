@@ -69,6 +69,7 @@ namespace Amazoom
                                 }
                             }
                             
+
                         }
                     }
                     this.currentLoad += currItem.Item1.weight;
