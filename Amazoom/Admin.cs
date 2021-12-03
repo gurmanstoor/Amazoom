@@ -74,11 +74,14 @@ namespace Amazoom
             Console.WriteLine("|              ORDERS              |");
             Console.WriteLine("------------------------------------");
 
-            foreach(Order in warehouse.orderList)
+            foreach(Order order in warehouse.orderLog)
             {
-
+                Console.WriteLine("OrderID: {0}, status: {1}", order.id, order.status);
             }
-
+            Console.WriteLine("------------------------------------");
+            Console.WriteLine("Press Enter to return to the console");
+            Console.ReadLine();
+            displayAdmin();
         }
 
         public void viewStock()
