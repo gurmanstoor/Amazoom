@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp5.0</TargetFramework>
-    <StartupObject>Amazoom.Server</StartupObject>
+    <StartupObject>Amazoom.Program</StartupObject>
   </PropertyGroup>
 
 </Project>
