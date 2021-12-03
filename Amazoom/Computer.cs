@@ -134,6 +134,13 @@ namespace Amazoom
         private readonly int maxItemStock = 5; //****how do we determine what the max number of stock for each item is? based on shelves and total items??
         private bool dockInUse { set; get; } //use sempahores when implementing multi-threaded to confirm whether dock is in use
 
+        //order status keywords
+        public readonly string ORDER_FAILED = "ORDER FAILED";
+        public readonly string ORDER_PROCESSING = "ORDER PROCESSING";
+        public readonly string ORDER_FULFILLED = "ORDER FULFILLED";
+        public readonly string ORDER_DELIVERY = "ORDER OUT FOR DELIVERY";
+
+
         //**implement threadsafe queues to allow robots to queue up their orders once processed
         public static Queue<Order> processedOrders = new Queue<Order>(); //queue to identify which orders are ready for delivery, will be loaded into trucks on a FIFO basis
         public static List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
@@ -284,22 +291,8 @@ namespace Amazoom
                     }
 
                 }
-
                 tempRobot.setActiveStatus(true);
-                // convert order to list of items
-
-                // this would only have 1 quanity per item so only send item to robot queue
-                /*foreach ((Item item, int quantity) orderItem in order.items)
-                {
-                    Item item = orderItem.item;
-                    (Item, Shelf) currItem = (item, shelves[item.shelfId]);
-                    //check if any other robot currently is at current item's cell in warehouse grid. If there is, wait till it empties (threading implementation using Mutex??)
-                    tempRobot.QueueItem(currItem, orderItem.quantity);
-
-                }*/
-                int orderId = order.id;
-                string orderStatus = order.status;
-                List<Item> orderItems = orderToItems(order);
+                List<Item> orderItems = orderToItems(order); //convert our order into a list of individual items
                 foreach (Item item in orderItems)
                 {
                     (Item, Shelf) currItem = (item, shelves[item.shelfId]);
@@ -307,12 +300,27 @@ namespace Amazoom
                     tempRobot.QueueItem(currItem, 1);
                 }
                 // do we need to send in order? since it pop order off the queue anyways
+<<<<<<< HEAD
 
+=======
+                order.status = this.ORDER_PROCESSING;
+>>>>>>> 6eb7886 (status codes for order)
                 tempRobot.getOrder(order); //invoke Robot getOrder() method to retrieve all items from warehouse
+                order.status = this.ORDER_FULFILLED;
                 tempRobot.setActiveStatus(false);
                 //loadProcessedOrders(); // --> replace with "loadOrder()" method which will move the most recent order to the current delivery truck. If truck gets full, pop off queue and start loading next truck
                 serviceNextTruck();
             }
+            else
+            {
+                order.status = this.ORDER_FAILED;
+                
+            }
+        }
+
+        public string notifyUser(Order order)
+        {
+            return order.status;
         }
 
         private List<Item> orderToItems(Order order)
@@ -444,6 +452,7 @@ namespace Amazoom
 
                     currTruck.orders.Add(processedOrders.Dequeue());
                     currTruck.currWeight += currOrderWeight;
+                    currOrder.status = this.ORDER_DELIVERY;
                 }
                 else
                 {
@@ -530,6 +539,12 @@ namespace Amazoom
         public void AddNewCatalogItem(Product item)
         {
             Product[] currCatalog = ReadCatalog(); //read in current inventory
+            //check if item was already in our catalogue,
+            foreach(Product prod in currCatalog)
+            {
+                if (prod.name == item.name) return;
+            }
+
             Product[] updatedCatalog = new Product[currCatalog.Length + 1]; //create new Item[] array with size = previous size + 1 to accomodate new catalogue item
             int newItemId = currCatalog.Length;
             item.id = newItemId;
@@ -539,7 +554,6 @@ namespace Amazoom
             }
             updatedCatalog[updatedCatalog.Length - 1] = item; //add the newest item
             UpdateCatalog(updatedCatalog); //update the inventory JSON file
-            // ***** should we call a restock truck to place new item into warehouse 
             // ***** check to see if the item already exists to avoid accidental duplicates
 
         }
@@ -587,23 +601,5 @@ namespace Amazoom
             serviceNextTruck();
         }
 
-        ////methods to update the catalogue items available for user to order
-
-        //public static void UpdateCatalogue(Item[] newItems)
-        //{
-        //    string fileName = "../../../inventory.json";
-        //    string jsonString = JsonSerializer.Serialize(newItems);
-        //    File.WriteAllText(fileName, jsonString);
-
-        //}
-        //public static Product[] ReadCatalogue()
-        //{
-        //    string fileName = "../../../inventory.json";
-        //    string jsonString = File.ReadAllText(fileName);
-        //    //Item[] items = new Item[2];
-
-        //    Item[] items = JsonSerializer.Deserialize<Item[]>(jsonString);
-        //    return items;
-        //}
     }
 }

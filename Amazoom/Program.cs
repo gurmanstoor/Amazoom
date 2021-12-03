@@ -36,7 +36,6 @@ namespace Amazoom
             orderItems.Add((prod1, 4));
             //orderItems.Add((prod2, 2));
             //orderItems.Add((prod3, 3));
-
             Order testOrder = new Order(1, orderItems, "PLACED");
             comp.fulfillOrder(testOrder);
             //comp.ReadAndReplaceCatalogStock();
