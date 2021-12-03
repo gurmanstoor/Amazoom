@@ -300,11 +300,7 @@ namespace Amazoom
                     tempRobot.QueueItem(currItem, 1);
                 }
                 // do we need to send in order? since it pop order off the queue anyways
-<<<<<<< HEAD
-
-=======
                 order.status = this.ORDER_PROCESSING;
->>>>>>> 6eb7886 (status codes for order)
                 tempRobot.getOrder(order); //invoke Robot getOrder() method to retrieve all items from warehouse
                 order.status = this.ORDER_FULFILLED;
                 tempRobot.setActiveStatus(false);

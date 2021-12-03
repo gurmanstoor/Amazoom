@@ -43,11 +43,7 @@ namespace Amazoom
          * */
         public void getOrder(Order order)
         {
-<<<<<<< HEAD
             List<Item> currInventory = Computer.ReadInventory();
-=======
-            Product[] inventory = Computer.ReadInventory();
->>>>>>> Added client and server files
             //process all items of current order in queue
             while (this.robotQueue.Count > 0)
             {
@@ -73,11 +69,6 @@ namespace Amazoom
                                 }
                             }
                             
-
-<<<<<<< HEAD
-=======
-                            //inventory[currItem.Item1.id].stock -= 1;
->>>>>>> Added client and server files
                         }
                     }
                     this.currentLoad += currItem.Item1.weight;
