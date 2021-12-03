@@ -19,7 +19,7 @@ namespace Amazoom
         private static readonly byte[] buffer = new byte[BUFFER_SIZE];
         private static int orderID = 0;
 
-        private static Computer warehouse1 = new Computer();
+        private static Admin admin = new Admin();
 
         static void Main()
         {
@@ -99,7 +99,7 @@ namespace Amazoom
 
             if (text.ToLower() == "get json")
             {
-                string fileName = "../../../testing.json";
+                string fileName = "../../../catalogue.json";
                 string jsonString = File.ReadAllText(fileName);
 
                 Console.WriteLine("Text is a get json request");
@@ -113,7 +113,7 @@ namespace Amazoom
             {
                 string[] orders = text.Split(";").ToArray();
                 int result;
-                Product[] products = Computer.ReadInventory();
+                Product[] products = Computer.ReadCatalog();
                 List<(Product, int)> orderItems = new List<(Product, int)>();
 
                 for (int i = 0; i < orders.Length; i++)
@@ -121,6 +121,12 @@ namespace Amazoom
                     if (int.TryParse(orders[i], out result))
                     {
                         products[result].stock = products[result].stock - 1;
+
+                        if(products[result].stock == 0)
+                        {
+                            //send alert to admin
+                            //restock in admin
+                        }
 
                         if (i == 0)
                         {
@@ -142,9 +148,9 @@ namespace Amazoom
                         }
                     }
                 }
-                Computer.UpdateInventory(products);
+                Computer.UpdateCatalog(products);
                 Console.WriteLine("Sending order to warehouse");
-                warehouse1.recieveOrder(orderItems, orderID);
+                admin.sendOrder(new Order(orderID, orderItems, ""));
             }
 
 

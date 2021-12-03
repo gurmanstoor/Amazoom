@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using System.IO;
 
 namespace Amazoom
 {
@@ -252,7 +251,15 @@ namespace Amazoom
             }
             else if (option == 2)
             {
-                checkout(cart);
+                if (cart.Count == 0)
+                {
+                    Console.WriteLine("Cart is empty, cannot checkout. ");
+                    displayStore(cart);
+                }
+                else
+                {
+                    checkout(cart);
+                }           
             }
             else
             {
@@ -307,6 +314,7 @@ namespace Amazoom
         {
             Product[] products = ReadInventory();
             double total = 0;
+
             foreach (var num in cart)
             {
                 total += products[num].price;
@@ -340,18 +348,25 @@ namespace Amazoom
             }
             if (option == 1)
             {
+                foreach(var num in cart)
+                {
+                    if (products[num].stock == 0)
+                    {
+                        Console.WriteLine("Sorry item: {0} is out of stock and has been removed from your order.", products[num].name);
+                        cart.Remove(num);
+                    }
+                }
+                
                 sendCart(cart);
             }
-            else
-            {
-                displayStore(cart);
-            }
+
+            displayStore(cart);
+            
         }
 
         public static int Main(String[] args)
         {
             startClient();
-            //clientSocket();
             return 0;
         }
 

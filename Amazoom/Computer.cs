@@ -145,7 +145,7 @@ namespace Amazoom
         //**implement threadsafe queues to allow robots to queue up their orders once processed
         public static Queue<Order> processedOrders = new Queue<Order>(); //queue to identify which orders are ready for delivery, will be loaded into trucks on a FIFO basis
         public static List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
-        public static List<Order> orderLog = new List<Order>();
+        public List<Order> orderLog = new List<Order>();
         private Queue<Truck> dockingQueue = new Queue<Truck>(); //queue to track which trucks are waiting to be serviced, could be a restocking or delivery truck
         private Queue<RestockTruck> restockTruckQueue = new Queue<RestockTruck>();
         private Queue<DeliveryTruck> deliveryTruckQueue = new Queue<DeliveryTruck>();
