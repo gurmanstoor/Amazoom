@@ -1,11 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-<<<<<<< HEAD
-=======
-using System.Text.Json;
-using System.IO;
-
->>>>>>> adding files
 
 namespace Amazoom
 {

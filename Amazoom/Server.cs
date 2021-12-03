@@ -19,7 +19,7 @@ namespace Amazoom
         private static readonly byte[] buffer = new byte[BUFFER_SIZE];
         private static int orderID = 0;
 
-        private static Computer warehouse1 = new Computer();
+        private static Admin admin = new Admin();
 
         static void Main()
         {
@@ -122,6 +122,12 @@ namespace Amazoom
                     {
                         products[result].stock = products[result].stock - 1;
 
+                        if(products[result].stock == 0)
+                        {
+                            //send alert to admin
+                            //restock in admin
+                        }
+
                         if (i == 0)
                         {
                             orderItems.Add((products[i], 1));
@@ -144,7 +150,7 @@ namespace Amazoom
                 }
                 Computer.UpdateCatalog(products);
                 Console.WriteLine("Sending order to warehouse");
-                warehouse1.fulfillOrder(new Order(orderID, orderItems, ""));
+                admin.sendOrder(new Order(orderID, orderItems, ""));
             }
 
 
