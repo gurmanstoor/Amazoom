@@ -97,7 +97,7 @@ namespace Amazoom
             string text = Encoding.ASCII.GetString(recBuf);
             Console.WriteLine("Received Text: " + text);
 
-            if(text.ToLower() == "get json")
+            if (text.ToLower() == "get json")
             {
                 string fileName = "../../../testing.json";
                 string jsonString = File.ReadAllText(fileName);
