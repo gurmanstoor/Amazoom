@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Linq;
+using System.Threading;
 
 namespace Amazoom
 {
@@ -19,13 +20,18 @@ namespace Amazoom
         private static readonly byte[] buffer = new byte[BUFFER_SIZE];
         private static int orderID = 0;
 
-        private static Admin admin = new Admin();
+        private static Admin admin;
 
         static void Main()
         {
             Console.Title = "Server";
-            SetupServer();
+            
+            Thread thread = new Thread(SetupServer);
+            thread.Start();
+            admin = new Admin();
+            //SetupServer();
             Console.ReadLine(); // When we press enter close everything
+            thread.Join();
             CloseAllSockets();
         }
 
