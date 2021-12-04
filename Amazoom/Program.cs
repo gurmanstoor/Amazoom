@@ -10,7 +10,7 @@ namespace Amazoom
             Console.WriteLine("TEST STARTED");
             Computer comp = new Computer();
 
-            Product prod1 = new Product("d", 100, 99);
+            Product prod1 = new Product("b", 100, 99);
             //Product prod2 = new Product("c", 100, 99);
             //Product prod3 = new Product("d", 100, 99);
 

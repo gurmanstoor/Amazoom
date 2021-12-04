@@ -309,7 +309,19 @@ namespace Amazoom
                 tempRobot.setActiveStatus(false);
                 setOrderStatus(order, this.ORDER_FULFILLED);
                 //loadProcessedOrders(); // --> replace with "loadOrder()" method which will move the most recent order to the current delivery truck. If truck gets full, pop off queue and start loading next truck
-                serviceNextTruck();
+
+                bool needNewTruck = true;
+                foreach(Truck truck in this.dockingQueue)
+                {
+                    if(truck.GetType() == typeof(DeliveryTruck))
+                    {
+                        needNewTruck = false;
+                        break;
+                    }
+                }
+                DeliveryTruck currTruck = serviceNextTruck(needNewTruck);
+                loadProcessedOrders(currTruck);
+                
             }
             else
             {
@@ -382,7 +394,7 @@ namespace Amazoom
         public void loadProcessedOrders(DeliveryTruck currTruck)
         {
             //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
-            while (processedOrders.Count > 0)
+            while (processedOrders.Count > 0) //3
             {
              
                 Order currOrder = processedOrders.Peek();
@@ -395,9 +407,9 @@ namespace Amazoom
 
                 if(currOrderWeight > currTruck.maxWeightCapacity)
                 {
-                    Console.WriteLine("ERROR: ORDER WEIGHT EXCEEDS TRUCK CAPACITY. NEED BIG TRUCK");
+                    Console.WriteLine("ERROR: ORDER WEIGHT EXCEEDS TRUCK CAPACITY. NEED BIGGER TRUCK");
                     setOrderStatus(processedOrders.Dequeue(),this.ORDER_FAILED);
-                    return;
+                    break;
                 }
                 else
                 {
@@ -409,23 +421,20 @@ namespace Amazoom
                     }
                     else
                     {
-                        serviceNextTruck();
-                        break;
+                        bool needDeliveryTruck = true;
+                        deliverOrders((DeliveryTruck)this.dockingQueue.Dequeue());
+                        currTruck = serviceNextTruck(needDeliveryTruck);
                     }
                 }
-                deliverOrders(currTruck);
+                
             }
-
-            
-
-            //SENDING OUT DELIVERY TRUCK AT THIS POINT. PUT THAT DELIVERY TRUCK BACK IN DELIVERYTRUCKQUEUE AND PUT A NEW DELVIERYTRUCK FROM DELIVERYTRUCKQUEUE INTO DOCKINGQUEUE
-            //****spin a new thread, send in current delivery truck into the thread along with a method which will put that truck at the back of the deliveryTrucks queue after a timer expires
+            deliverOrders((DeliveryTruck)this.dockingQueue.Dequeue());
 
         }
 
-        private void serviceNextTruck()
+        private DeliveryTruck serviceNextTruck(bool needNewDeliveryTruck = false)
         {
-            if (this.deliveryTruckQueue.Count == this.numTrucks)
+            if (needNewDeliveryTruck && this.deliveryTruckQueue.Count > 0) //check if another delivery truck is required and whether there is at least 1 available. If not, they are already in the dockingQueue
             {
                 this.dockingQueue.Enqueue(this.deliveryTruckQueue.Dequeue());
             }
@@ -435,8 +444,9 @@ namespace Amazoom
                 RestockTruckItems((RestockTruck)this.dockingQueue.Dequeue());
             }
 
-            DeliveryTruck currTruck = (DeliveryTruck)this.dockingQueue.Dequeue();
-            loadProcessedOrders(currTruck);
+            DeliveryTruck currTruck = (DeliveryTruck)this.dockingQueue.Peek();
+            //loadProcessedOrders(currTruck);
+            return currTruck;
         }
 
         public void deliverOrders(DeliveryTruck truck)
@@ -499,7 +509,6 @@ namespace Amazoom
                     shelves[shelfNumber].currWeight += newItem.weight;
                     shelves[shelfNumber].items.Add(newItem);
                     inventory.Add(newItem);
-                    //inventory[newItem.id].stock += 1; need to increase the product stock not item stock
                     break;
                 }
                 else
