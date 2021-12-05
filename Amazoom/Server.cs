@@ -24,128 +24,180 @@ namespace Amazoom
 
         static void Main()
         {
-            Console.Title = "Server";
-            
+            //Start up server concurrently
             Thread thread = new Thread(SetupServer);
             thread.Start();
+
+            // Add a new Admin and warehouse
             admin = new Admin();
-            //SetupServer();
-            Console.ReadLine(); // When we press enter close everything
+
+            // When we press enter close everything
+            Console.ReadLine();
+            //Join threads before closing the program
             thread.Join();
+            //Close all sockets on program closure
             CloseAllSockets();
         }
 
+        /*
+         * @return: void
+         * Creates a Server socket and begins listening for client connections
+         * */
         private static void SetupServer()
         {
-            Console.WriteLine("Setting up server...");
+            //Setting up server
             serverSocket.Bind(new IPEndPoint(ipAddress, PORT));
             serverSocket.Listen(1);
             serverSocket.BeginAccept(AcceptCallback, null);
-            Console.WriteLine("Server setup complete");
         }
 
-        /// <summary>
-        /// Close all connected client (we do not need to shutdown the server socket as its connections
-        /// are already closed with the clients).
-        /// </summary>
+        /*
+         * @return: void
+         * Close all connected client (we do not need to shutdown the server socket as its connections
+         * are already closed with the clients).
+         */
         private static void CloseAllSockets()
         {
+            // loop through each client and close them
             foreach (Socket socket in clientSockets)
             {
+                // Shutdown before closing the socket
                 socket.Shutdown(SocketShutdown.Both);
                 socket.Close();
             }
-
+            // Finally close the server socket
             serverSocket.Close();
         }
 
+        /*
+         * @return: void
+         * Accepts a client and if no errors, will begin to get data
+         */
         private static void AcceptCallback(IAsyncResult AR)
         {
             Socket socket;
 
+            // Try Catch block: stop accepting server socket clients
             try
             {
+                // End socket acception
                 socket = serverSocket.EndAccept(AR);
             }
-            catch (ObjectDisposedException) // I cannot seem to avoid this (on exit when properly closing sockets)
+            // Catch error if socket is disposed
+            catch (ObjectDisposedException) 
             {
                 return;
             }
 
+            // Add client socket to client list
             clientSockets.Add(socket);
+
+            // Begins to async accept data
             socket.BeginReceive(buffer, 0, BUFFER_SIZE, SocketFlags.None, ReceiveCallback, socket);
-            Console.WriteLine("Client connected, waiting for request...");
+            //Console.WriteLine("Client connected, waiting for request...");
+            // Accept a new connection
             serverSocket.BeginAccept(AcceptCallback, null);
         }
 
+        /*
+         * @return: void
+         * Recieves and processes client data. Can either send back JSON data or forward an order to a warehouse
+         */
         private static void ReceiveCallback(IAsyncResult AR)
         {
             Socket current = (Socket)AR.AsyncState;
             int received;
+            int result;
+            List<(Product, int)> orderItems = new List<(Product, int)>();
+            bool restock = false;
+            Product restockProduct = new Product();
 
+            // Try Catch Block: Get number of bytes recieved
             try
             {
                 received = current.EndReceive(AR);
             }
+            // Catch socket exceptions
             catch (SocketException)
             {
-                Console.WriteLine("Client forcefully disconnected");
+                //Console.WriteLine("Client forcefully disconnected");
+
                 // Don't shutdown because the socket may be disposed and its disconnected anyway.
                 current.Close();
                 clientSockets.Remove(current);
                 return;
             }
 
-            orderID++;
-
+            // Create recieveing byte buffer
             byte[] recBuf = new byte[received];
             Array.Copy(buffer, recBuf, received);
-            string text = Encoding.ASCII.GetString(recBuf);
-            Console.WriteLine("Received Text: " + text);
 
+            // Get string data from client
+            string text = Encoding.ASCII.GetString(recBuf);
+            //Console.WriteLine("Received Text: " + text);
+
+            // Check if client requested JSON data
             if (text.ToLower() == "get json")
             {
+                // Read the JSON file
                 string fileName = "../../../catalogue.json";
                 string jsonString = File.ReadAllText(fileName);
 
-                Console.WriteLine("Text is a get json request");
+                //Console.WriteLine("Text is a get json request");
+
+                // Encode the JSON data and send it to the client
                 byte[] data = Encoding.ASCII.GetBytes(jsonString);
                 current.Send(data);
-                Console.WriteLine("json sent to client");
 
-                //Product[] items = JsonSerializer.Deserialize<Product[]>(jsonString);
+                //Console.WriteLine("json sent to client");
+
             }
+            // Order from client
             else
             {
+                // Increase number of total orders processed
+                orderID++;
+                
+                // Get the catalogue ID's for the order
                 string[] orders = text.Split(";").ToArray();
-                int result;
+                
+                // Read the Catalogue JSON file
                 Product[] products = Computer.ReadCatalog();
-                List<(Product, int)> orderItems = new List<(Product, int)>();
 
+                // Loop through the order and decrement stock
                 for (int i = 0; i < orders.Length; i++)
                 {
+                    // Confirm the order number is an int
                     if (int.TryParse(orders[i], out result))
                     {
+                        // Decrement stock of the order product
                         products[result].stock = products[result].stock - 1;
 
+                        // CHeck if the product needs to be restocked
                         if(products[result].stock == 0)
                         {
-                            //send alert to admin
-                            //restock in admin
+                            // Initialize restock items
+                            restock = true;
+                            restockProduct = products[result];
                         }
 
+                        // Check the first product in the cart
                         if (i == 0)
                         {
+                            // Add the product directly to the order Lsit
                             orderItems.Add((products[i], 1));
                         }
                         else
                         {
+                            // Loop through the processed order list
                             for (int j = 0; j < orderItems.Count(); j++)
                             {
+                                // If the product is already in the list, increment quantity needed
                                 if (orderItems[j].Item1.name == products[result].name)
                                 {
                                     orderItems[j] = (orderItems[j].Item1, orderItems[j].Item2 + 1);
                                 }
+                                // If a new product, add it to the list
                                 else
                                 {
                                     orderItems.Add((products[result], 1));
@@ -154,17 +206,25 @@ namespace Amazoom
                         }
                     }
                 }
+
+                // Update the JSON file with the new stock after the order is fulfilled
                 Computer.UpdateCatalog(products);
-                Console.WriteLine("Sending order to warehouse");
+
+                // Always Shutdown before closing
+                current.Shutdown(SocketShutdown.Both);
+                current.Close();
+                clientSockets.Remove(current);
+                //Console.WriteLine("Client disconnected");
+
+                // Send order to warehouse to be completed
                 admin.sendOrder(new Order(orderID, orderItems, ""));
+
+                // Notify admin to restock their warehouse
+                if (restock)
+                {
+                    admin.notifyAdmin(restockProduct);
+                }
             }
-
-
-            // Always Shutdown before closing
-            current.Shutdown(SocketShutdown.Both);
-            current.Close();
-            clientSockets.Remove(current);
-            Console.WriteLine("Client disconnected");
         }
     }
 }
