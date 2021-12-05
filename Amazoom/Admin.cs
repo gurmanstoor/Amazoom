@@ -230,7 +230,6 @@ namespace Amazoom
 
         public Admin()
         {
-
             Console.WriteLine("------------------------------------");
             Console.WriteLine("Do you wish to access the small, medium or large warehouse");
             Console.WriteLine("------------------------------------");
@@ -263,8 +262,7 @@ namespace Amazoom
             }
             warehouse = new Computer(option);
             timeThread.Start();
-
-        }
+        } 
 
         /*
          * @return: void
