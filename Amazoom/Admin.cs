@@ -449,8 +449,21 @@ namespace Amazoom
             Console.ReadLine();
 
             // Replace all items that are below max capacity stock
-            warehouse.ReadAndReplaceCatalogStock();
-
+            int truckId = warehouse.ReadAndReplaceCatalogStock();
+            if (truckId == -1)
+            {
+                Console.WriteLine("------------------------------------");
+                Console.WriteLine("Restock truck failed");
+                Console.WriteLine("Restock truck will be resent");
+            }
+            else 
+            {
+                Console.WriteLine("------------------------------------");
+                Console.WriteLine("Restock truck {0] has arrived to the warehouse and will be serviced soon");
+            }
+            
+            Console.WriteLine("Press Enter to return to Admin menu");
+            Console.ReadLine();
             // Return to admin console
             displayAdmin();
 

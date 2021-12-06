@@ -216,6 +216,7 @@ namespace Amazoom
                 //Console.WriteLine("Client disconnected");
 
                 // Send order to warehouse to be completed
+
                 admin.sendOrder(new Order(orderID, orderItems, ""));
             }
         }

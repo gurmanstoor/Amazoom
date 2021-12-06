@@ -571,7 +571,7 @@ namespace Amazoom
             {
                 while (this.dockingQueue.Peek().GetType() == typeof(RestockTruck))
                 {
-                    Console.WriteLine("Restock truck {0} has arrived", this.dockingQueue.Peek().id);
+                    //Console.WriteLine("Restock truck {0} has arrived", this.dockingQueue.Peek().id);
                     RestockTruckItems((RestockTruck)this.dockingQueue.Dequeue());
                     if (this.dockingQueue.Count == 0)
                     {
@@ -672,7 +672,7 @@ namespace Amazoom
 
         // need to update catalog with new stock
         //**need to also implement logic to check restock truck capacity
-        public void ReadAndReplaceCatalogStock()
+        public int ReadAndReplaceCatalogStock()
         {
             Product[] currentCatalog = ReadCatalog();
             List<(Product, int)> productToRestock = new List<(Product, int)>();
@@ -703,8 +703,10 @@ namespace Amazoom
                 availableRestockTruck.items = productToRestock; //assign a truck to bring in the inventory that needs to be replaced
                 this.dockingQueue.Enqueue(availableRestockTruck);
                 serviceNextTruck();
+                return availableRestockTruck.id;
 
             }
+            return -1;
         }
 
         //only adds an item to our catalogue of available items, doesn't actually place anything in the inventory

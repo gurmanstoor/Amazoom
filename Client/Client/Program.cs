@@ -373,6 +373,7 @@ namespace Amazoom
                 {
                     // Add item to the cart if in stock
                     cart.Add(id);
+                    // 
                     Console.WriteLine("Product added to cart!");
                 }
 
@@ -596,5 +597,7 @@ namespace Amazoom
             // Display exit message
             Console.WriteLine("Goodbye! Please shop at AMAZOOM again!");
         }
+
+        
     }
 }
