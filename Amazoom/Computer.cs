@@ -491,7 +491,7 @@ namespace Amazoom
         public void loadProcessedOrders(DeliveryTruck currTruck)
         {
             //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
-            while (processedOrders.Count > 0)
+            while (processedOrders.Count > 0) //3
             {
 
                 Order currOrder;

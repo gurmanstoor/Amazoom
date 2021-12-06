@@ -219,6 +219,7 @@ namespace Amazoom
     {
 
         private static Computer warehouse;
+
         private static Queue<Order> receivedOrders = new Queue<Order>();
         //private static bool deliveryFlag = false;
         private static int deliveryInterval = 10;
@@ -226,12 +227,16 @@ namespace Amazoom
 
         private List<Thread> orderThreads = new List<Thread>();
 
+
         public Admin()
         {
+            // Create a new warehouse
             warehouse = new Computer();
+
             timeThread.Start();
 
         }
+
         /*
          * @return: void
          * Continually run the admin console
@@ -280,6 +285,7 @@ namespace Amazoom
                     line = Console.ReadLine();
                 }
                 // Confirm option selected is in menu
+
                 else if (option > 4 || option < 1)
                 {
                     // Re-prompt user for new int in menu
@@ -287,6 +293,7 @@ namespace Amazoom
                     line = Console.ReadLine();
                 }
                 // Break out of the loop once a correct option is selected
+
                 else
                 {
                     break;
@@ -302,11 +309,13 @@ namespace Amazoom
             {
                 viewStock();
             }
+
             // view alerts
             else if (option == 3)
             {
                 notifyAdmin();
             }
+
             // Exit the console
             else
             {
@@ -327,9 +336,11 @@ namespace Amazoom
             Console.WriteLine("------------------------------------");
 
             // Loop through order log
+
             foreach ((Order, int) order in warehouse.orderLog)
             {
                 Console.WriteLine("OrderID: {0}, status: {1}", order.Item1.id, order.Item1.status);
+
             }
             Console.WriteLine("------------------------------------");
             Console.WriteLine("Press Enter to return to the console");
@@ -395,6 +406,7 @@ namespace Amazoom
             }
         }
 
+
         public static void deliveryTimer(int interval)
         {
             while (true)
@@ -428,6 +440,7 @@ namespace Amazoom
          * Ouptuts an alert and then calls on the warehouse to replace all items that are below max capacity
          */
         public void notifyAdmin()
+
         {
             // Console output
             Console.Clear();
@@ -464,6 +477,7 @@ namespace Amazoom
             
             Console.WriteLine("Press Enter to return to Admin menu");
             Console.ReadLine();
+
             // Return to admin console
             displayAdmin();
 
