@@ -115,7 +115,6 @@ namespace Amazoom
             bool restock = false;
             List<Product> restockProducts = new List<Product>();
 
-
             // Try Catch Block: Get number of bytes recieved
             try
             {
@@ -221,7 +220,6 @@ namespace Amazoom
                 //Console.WriteLine("Client disconnected");
 
                 // Send order to warehouse to be completed
-
                 admin.sendOrder(new Order(orderID, orderItems, ""));
             }
         }

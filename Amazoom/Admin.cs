@@ -1,4 +1,4 @@
-﻿//using System;
+//using System;
 //using System.Threading;
 //using System.Windows;
 //using System.Collections.Generic;
@@ -312,7 +312,6 @@ namespace Amazoom
                     line = Console.ReadLine();
                 }
                 // Confirm option selected is in menu
-
                 else if (option > 4 || option < 1)
                 {
                     // Re-prompt user for new int in menu
@@ -320,7 +319,6 @@ namespace Amazoom
                     line = Console.ReadLine();
                 }
                 // Break out of the loop once a correct option is selected
-
                 else
                 {
                     break;
@@ -336,13 +334,11 @@ namespace Amazoom
             {
                 viewStock();
             }
-
             // view alerts
             else if (option == 3)
             {
                 notifyAdmin();
             }
-
             // Exit the console
             else
             {
@@ -557,7 +553,6 @@ namespace Amazoom
          * Ouptuts an alert and then calls on the warehouse to replace all items that are below max capacity
          */
         public void notifyAdmin()
-
         {
             // Console output
             Console.Clear();
@@ -573,7 +568,7 @@ namespace Amazoom
                     Console.WriteLine("Product: {0} is out of stock", item.name);
                 }
             }
-
+            
             Console.WriteLine("------------------------------------");
             Console.WriteLine("Press Enter to replenish stock");
             Console.ReadLine();
@@ -594,6 +589,9 @@ namespace Amazoom
             
             Console.WriteLine("Press Enter to return to Admin menu");
             Console.ReadLine();
+
+            // Replace all items that are below max capacity stock
+            warehouse.ReadAndReplaceCatalogStock();
 
             // Return to admin console
             displayAdmin();
