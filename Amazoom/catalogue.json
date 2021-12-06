@@ -1,6 +1,6 @@
 [
   {
-    "stock": 3,
+    "stock": 5,
     "name": "a",
     "weight": 100,
     "price": 99,
@@ -28,42 +28,42 @@
     "id": 3
   },
   {
-    "stock": 4,
+    "stock": 3,
     "name": "e",
     "weight": 100,
     "price": 99,
     "id": 4
   },
   {
-    "stock": 5,
+    "stock": 0,
     "name": "f",
     "weight": 100,
     "price": 99,
     "id": 5
   },
   {
-    "stock": 5,
+    "stock": 0,
     "name": "g",
     "weight": 100,
     "price": 99,
     "id": 6
   },
   {
-    "stock": 6,
+    "stock": 0,
     "name": "h",
     "weight": 100,
     "price": 99,
     "id": 7
   },
   {
-    "stock": 8,
+    "stock": 0,
     "name": "i",
     "weight": 100,
     "price": 99,
     "id": 8
   },
   {
-    "stock": 9,
+    "stock": 0,
     "name": "j",
     "weight": 100,
     "price": 99,

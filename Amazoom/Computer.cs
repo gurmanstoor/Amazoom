@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Text.Json;
 using System.IO;
 using System.Threading;
@@ -126,29 +127,33 @@ namespace Amazoom
     public class Computer
     {
         public Shelf[] shelves;
-        public Robot[] robots;
+        public List<Robot> workingRobots = new List<Robot>();
+        public Queue<Robot> standbyRobots = new Queue<Robot>();
         public Truck[] trucks;
+        private Thread[] threads;
+        private static Mutex[,] gridCellMutices;
         private readonly int numRobots = 5;
         private readonly int numTrucks = 5;
-        private readonly double maxTruckCapacity = 210.0;
+        public readonly double maxTruckCapacity = 10000.0;
         private readonly int maxItemStock = 5; //****how do we determine what the max number of stock for each item is? based on shelves and total items??
-        private bool dockInUse { set; get; } //use sempahores when implementing multi-threaded to confirm whether dock is in use
+        public static int numRows;
+        public static int numCols;
+        public static int invId=0;
 
         //order status keywords
         public readonly string ORDER_FAILED = "ORDER FAILED";
         public readonly string ORDER_PROCESSING = "ORDER PROCESSING";
         public readonly string ORDER_FULFILLED = "ORDER FULFILLED AND WAITING FOR DELIVERY";
         public readonly string ORDER_DELIVERY = "ORDER OUT FOR DELIVERY";
+        public readonly string ORDER_DELIVERED = "ORDER HAS BEEN DELIVERED";
         public readonly string ORDER_RECEIVED = "ORDER RECEIVED";
 
-
-        //**implement threadsafe queues to allow robots to queue up their orders once processed
-        public static Queue<Order> processedOrders = new Queue<Order>(); //queue to identify which orders are ready for delivery, will be loaded into trucks on a FIFO basis
+        public static ConcurrentQueue<Order> processedOrders = new ConcurrentQueue<Order>(); //queue to identify which orders are ready for delivery, will be loaded into trucks on a FIFO basis
         public static List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
-        public List<Order> orderLog = new List<Order>();
-        private Queue<Truck> dockingQueue = new Queue<Truck>(); //queue to track which trucks are waiting to be serviced, could be a restocking or delivery truck
+        public List<(Order, int)> orderLog = new List<(Order, int)>();
+        public Queue<Truck> dockingQueue = new Queue<Truck>(); //queue to track which trucks are waiting to be serviced, could be a restocking or delivery truck
         private Queue<RestockTruck> restockTruckQueue = new Queue<RestockTruck>();
-        private Queue<DeliveryTruck> deliveryTruckQueue = new Queue<DeliveryTruck>();
+        public ConcurrentQueue<DeliveryTruck> deliveryTruckQueue = new ConcurrentQueue<DeliveryTruck>();
 
 
         public Computer()
@@ -157,10 +162,6 @@ namespace Amazoom
             initializeShelves();
             initializeRobots();
             initializeTrucks();
-
-            //placeholder item
-            this.dockInUse = false;
-
         }
 
         /*
@@ -169,11 +170,11 @@ namespace Amazoom
          * */
         private void initializeRobots()
         {
+            this.threads = new Thread[this.numRobots];
             //currently initializing 5 robots on the same thread. Could spin a new thread for each robot to handle its own orders
-            this.robots = new Robot[this.numRobots];
             for (int i = 0; i < this.numRobots; i++)
             {
-                this.robots[i] = new Robot(0, new int[] { 0, 0 });
+                this.workingRobots.Add(new Robot(i, new int[] { -1, -1 }));
             }
 
         }
@@ -200,11 +201,12 @@ namespace Amazoom
          * */
         private void initializeShelves()
         {
-            int numRows = 3;
-            int numCols = 4;
+            numRows = 3;
+            numCols = 4;
             int height = 2;
             int numShelves = (numCols - 1) * (numRows - 2) * height * 2;
 
+            gridCellMutices = new Mutex[numRows, numCols];
             this.shelves = new Shelf[numShelves];
             int shelfNum = 0;
 
@@ -255,10 +257,15 @@ namespace Amazoom
                         shelfNum++;
                     }
 
-
+                    for(int row=0; row < numRows; row++)
+                    {
+                        gridCellMutices[row,i] = new Mutex();
+                    }
                 }
+
             }
             loadShelves(); //loading shelves with initial inventory
+
         }
 
         public void loadShelves()
@@ -268,6 +275,7 @@ namespace Amazoom
             {
                 shelves[item.shelfId].items.Add(item);
             }
+            invId = currInventory.Count;
         }
         /*
          * @param: an Order to be fulfilled by a robot
@@ -277,39 +285,69 @@ namespace Amazoom
         // After checking order is valid we need to change the order to a list of items (repeated items if multiple quantities)
         public void fulfillOrder(Order order)
         {
+            Console.WriteLine("Order {0}", order.id);
             setOrderStatus(order, this.ORDER_RECEIVED);
-            orderLog.Add(order);
+            orderLog.Add((order, (int)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds));
             if (orderIsValid(order)) //helper method to validate each order to confirm if all items are available
             {
                 setOrderStatus(order, this.ORDER_PROCESSING);
                 //**add logic to figure out which robot is available, assign order to that robot
-                Robot tempRobot = null;
-                while (tempRobot == null)
-                {
-                    foreach (Robot robot in this.robots)
-                    {
-                        if (robot.getActiveStatus() == false)
-                        {
-                            tempRobot = robot;
-                            break;
-                        }
-                    }
+                //Robot tempRobot = null;
+                //while (tempRobot == null)
+                //{
+                //    foreach (Robot robot in this.robots)
+                //    {
+                //        if (robot.getActiveStatus() == false)
+                //        {
+                //            tempRobot = robot;
+                //            break;
+                //        }
+                //    }
 
-                }
-                tempRobot.setActiveStatus(true);
-                List<Item> orderItems = orderToItems(order); //convert our order into a list of individual items
-                foreach (Item item in orderItems)
-                {
-                    (Item, Shelf) currItem = (item, shelves[item.shelfId]);
-                    //check if any other robot currently is at current item's cell in warehouse grid. If there is, wait till it empties (threading implementation using Mutex??)
-                    tempRobot.QueueItem(currItem, 1);
-                }
-                // do we need to send in order? since it pop order off the queue anyways
-                tempRobot.getOrder(order); //invoke Robot getOrder() method to retrieve all items from warehouse
-                tempRobot.setActiveStatus(false);
+                //}
+
+
+                //Robot tempRobot = null;
+                //while(tempRobot == null)
+                //{
+                //    if (this.standbyRobots.Count > 0)
+                //    {
+                //        tempRobot = this.standbyRobots.Dequeue();
+                //        this.threads[this.workingRobots.Count] = new Thread(() => collectOrder(tempRobot,order));
+                //        this.threads[this.workingRobots.Count].Start();
+                //        this.workingRobots.Add(tempRobot);
+
+                //    }
+
+                //}
+                //for (int i = 0; i < this.workingRobots.Count; i++)
+                //{
+                //    int currIdx = i;
+                //    this.threads[currIdx].Join();
+                //}
+
+
+                //for (int i = 0; i < this.workingRobots.Count; i++)
+                //{
+                //    this.standbyRobots.Enqueue(this.workingRobots[i]);
+                //}
+                //this.workingRobots.Clear();
+
+                collectOrder(order);
                 setOrderStatus(order, this.ORDER_FULFILLED);
-                //loadProcessedOrders(); // --> replace with "loadOrder()" method which will move the most recent order to the current delivery truck. If truck gets full, pop off queue and start loading next truck
-                serviceNextTruck();
+
+                //bool needNewTruck = true;
+                //foreach(Truck truck in this.dockingQueue)
+                //{
+                //    if (truck.GetType() == typeof(DeliveryTruck))
+                //    {
+                //        needNewTruck = false;
+                //        break;
+                //    }
+                //}
+                //DeliveryTruck currTruck = serviceNextTruck(needNewTruck);
+                //loadProcessedOrders(currTruck);
+
             }
             else
             {
@@ -318,6 +356,66 @@ namespace Amazoom
             }
         }
 
+        private void collectOrder(Order order)
+        {
+            //robot.setActiveStatus(true);
+            ////spin threads here
+            //List<Item> orderItems = orderToItems(order); //convert our order into a list of individual items
+            //foreach (Item item in orderItems)
+            //{
+            //    (Item, Shelf) currItem = (item, shelves[item.shelfId]);
+            //    //check if any other robot currently is at current item's cell in warehouse grid. If there is, wait till it empties (threading implementation using Mutex??)
+            //    robot.QueueItem(currItem, 1);
+            //}
+            //robot.getOrder(order); //invoke Robot getOrder() method to retrieve all items from warehouse
+            //robot.setActiveStatus(false);
+
+            List<Item> orderItems = orderToItems(order); //convert our order into a list of individual items
+            int currRobot = 0;
+            List<Item> currInventory = ReadInventory();
+            for (int i = 0; i < orderItems.Count; i++)
+            {
+                for (int j = 0; j < currInventory.Count; j++)
+                {
+                    if (currInventory[j].id == orderItems[i].id)
+                    {
+                        currInventory.RemoveAt(j);
+                        break;
+                    }
+                }
+
+                if (currRobot == this.numRobots)
+                {
+                    currRobot = 0;
+                }
+
+                (Item, Shelf) currItem = (orderItems[i], shelves[orderItems[i].shelfId]);
+                this.workingRobots[currRobot].QueueItem(currItem, 1);
+                currRobot += 1;
+            }
+
+            int robotsInUse = 0;
+            for (int i = 0; i < numRobots; i++)
+            {
+                int idx = i;
+                if (!workingRobots[i].queueIsEmpty())
+                {
+                    robotsInUse += 1;
+                    threads[idx] = new Thread(() => workingRobots[idx].getOrder(ref Computer.gridCellMutices));
+                    threads[idx].Start();
+                }
+            }
+
+            for (int i = 0; i < robotsInUse; i++)
+            {
+                int idx = i;
+                threads[idx].Join();
+            }
+
+            UpdateInventory(currInventory);
+            processedOrders.Enqueue(order);
+
+        }
         /*
          * @param: an Order to be validated
          * @return: boolean
@@ -325,32 +423,43 @@ namespace Amazoom
          * */
         private bool orderIsValid(Order order)
         {
-            // should read catelog and see if we have each thing
-            Product[] catalog = ReadCatalog();
-            //Item[] inventory = ReadInventory();
+            List<Item> orderItems = orderToItems(order);
 
-            //Console.WriteLine(items);
+            int total_quantity = 0;
 
             foreach ((Product, int) product in order.products)
             {
-                int product_id = product.Item1.id;
-
-                int quantity = product.Item2;
-                foreach (Product catalog_product in catalog)
-                {
-                    // idk if we can use id can be used cause each product will have multiple stock items and each of those items has sep id
-                    if (product_id == catalog_product.id)
-                    {
-                        if (catalog_product.stock < quantity)
-                        {
-                            return false;
-                        }
-                        break;
-                    }
-
-                }
+                total_quantity += product.Item2;
             }
-            return true;
+            return (total_quantity == orderItems.Count);
+
+
+            //// should read catelog and see if we have each thing
+            //Product[] catalog = ReadCatalog();
+            ////Item[] inventory = ReadInventory();
+
+            ////Console.WriteLine(items);
+
+            //foreach ((Product, int) product in order.products)
+            //{
+            //    int product_id = product.Item1.id;
+
+            //    int quantity = product.Item2;
+            //    foreach (Product catalog_product in catalog)
+            //    {
+            //        // idk if we can use id can be used cause each product will have multiple stock items and each of those items has sep id
+            //        if (product_id == catalog_product.id)
+            //        {
+            //            if (catalog_product.stock < quantity)
+            //            {
+            //                return false;
+            //            }
+            //            break;
+            //        }
+
+            //    }
+            //}
+            //return true;
 
         }
 
@@ -384,8 +493,9 @@ namespace Amazoom
             //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
             while (processedOrders.Count > 0)
             {
-             
-                Order currOrder = processedOrders.Peek();
+
+                Order currOrder;
+                processedOrders.TryPeek(out currOrder);
                 double currOrderWeight = 0.0;
 
                 foreach ((Product, int) item in currOrder.products)
@@ -393,61 +503,108 @@ namespace Amazoom
                     currOrderWeight += ((item.Item1.weight) * item.Item2);  // order has multiple quantities
                 }
 
-                if(currOrderWeight > currTruck.maxWeightCapacity)
+                if (currOrderWeight > currTruck.maxWeightCapacity)
                 {
-                    Console.WriteLine("ERROR: ORDER WEIGHT EXCEEDS TRUCK CAPACITY. NEED BIG TRUCK");
-                    setOrderStatus(processedOrders.Dequeue(),this.ORDER_FAILED);
-                    return;
+                    Console.WriteLine("ERROR: ORDER WEIGHT EXCEEDS TRUCK CAPACITY. NEED BIGGER TRUCK");
+                    processedOrders.TryDequeue(out Order order);
+                    setOrderStatus(order, this.ORDER_FAILED);
+                    break;
                 }
                 else
                 {
                     if (currOrderWeight <= currTruck.maxWeightCapacity - currTruck.currWeight)
                     {
-
-                        currTruck.orders.Add(processedOrders.Dequeue());
+                        processedOrders.TryDequeue(out Order order);
+                        currTruck.orders.Add(order);
                         currTruck.currWeight += currOrderWeight;
                     }
                     else
                     {
-                        serviceNextTruck();
-                        break;
+                        bool needDeliveryTruck = true;
+                        DeliveryTruck tempTruck1 = (DeliveryTruck)this.dockingQueue.Dequeue();
+                        Thread deliveryThread1 = new Thread(() => deliverOrders(tempTruck1));
+                        deliveryThread1.Start();
+                        currTruck = serviceNextTruck(needDeliveryTruck);
                     }
                 }
-                deliverOrders(currTruck);
+
             }
-
-            
-
-            //SENDING OUT DELIVERY TRUCK AT THIS POINT. PUT THAT DELIVERY TRUCK BACK IN DELIVERYTRUCKQUEUE AND PUT A NEW DELVIERYTRUCK FROM DELIVERYTRUCKQUEUE INTO DOCKINGQUEUE
-            //****spin a new thread, send in current delivery truck into the thread along with a method which will put that truck at the back of the deliveryTrucks queue after a timer expires
+            DeliveryTruck tempTruck2 = (DeliveryTruck)this.dockingQueue.Dequeue();
+            serviceNextTruck();
+            Thread deliveryThread2 = new Thread(() => deliverOrders(tempTruck2));
+            deliveryThread2.Start();
 
         }
 
-        private void serviceNextTruck()
+        public DeliveryTruck serviceNextTruck(bool needNewDeliveryTruck = false)
         {
-            if (this.deliveryTruckQueue.Count == this.numTrucks)
+            if (needNewDeliveryTruck) //check if another delivery truck is required and whether there is at least 1 available. If not, they are already in the dockingQueue
             {
-                this.dockingQueue.Enqueue(this.deliveryTruckQueue.Dequeue());
-            }
-            while (this.dockingQueue.Peek().GetType() == typeof(RestockTruck))
-            {
-                Console.WriteLine("Restock truck {0} has arrived", this.dockingQueue.Peek().id);
-                RestockTruckItems((RestockTruck)this.dockingQueue.Dequeue());
+                bool deliveryTruckInDock = false;
+                foreach (Truck dockedTruck in dockingQueue)
+                {
+                    if (dockedTruck.GetType() == typeof(DeliveryTruck))
+                    {
+                        deliveryTruckInDock = true;
+                        break;
+                    }
+                }
+                if (!deliveryTruckInDock)
+                {
+                    while (true)
+                    {
+                        if (this.deliveryTruckQueue.TryDequeue(out DeliveryTruck truck))
+                        {
+                            this.dockingQueue.Enqueue(truck);
+                            break;
+                        }
+                        else
+                        {
+                            Thread.Sleep(1000);
+                        }
+                    }
+                }
+
             }
 
-            DeliveryTruck currTruck = (DeliveryTruck)this.dockingQueue.Dequeue();
-            loadProcessedOrders(currTruck);
+            if (this.dockingQueue.Count > 0)
+            {
+                while (this.dockingQueue.Peek().GetType() == typeof(RestockTruck))
+                {
+                    Console.WriteLine("Restock truck {0} has arrived", this.dockingQueue.Peek().id);
+                    RestockTruckItems((RestockTruck)this.dockingQueue.Dequeue());
+                    if (this.dockingQueue.Count == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            DeliveryTruck currTruck = new DeliveryTruck(-1, -1);
+
+            if (this.dockingQueue.Count > 0)
+            {
+                currTruck = (DeliveryTruck)this.dockingQueue.Peek();
+            }
+
+            //loadProcessedOrders(currTruck);
+            return currTruck;
         }
 
         public void deliverOrders(DeliveryTruck truck)
         {
             Console.WriteLine("Truck {0} is going out for delivery.", truck.id);
-            //****mark which trucks are out for delivery
             foreach (Order order in truck.orders)
             {
                 setOrderStatus(order, this.ORDER_DELIVERY);
             }
+            foreach (Order order in truck.orders)
+            {
+                Thread.Sleep(10);
+                setOrderStatus(order, this.ORDER_DELIVERED);
+            }
             truck.orders.Clear();
+            Console.WriteLine("Truck {0} has delivered all items and has returned to warehouse.", truck.id);
             this.deliveryTruckQueue.Enqueue(truck);
         }
 
@@ -486,7 +643,8 @@ namespace Amazoom
         {
             List<Item> inventory = ReadInventory();
 
-            newItem.id = inventory.Count;
+            newItem.id = invId+1;
+            invId += 1;
 
             Random rand = new Random();
             while (true)
@@ -499,7 +657,6 @@ namespace Amazoom
                     shelves[shelfNumber].currWeight += newItem.weight;
                     shelves[shelfNumber].items.Add(newItem);
                     inventory.Add(newItem);
-                    //inventory[newItem.id].stock += 1; need to increase the product stock not item stock
                     break;
                 }
                 else
@@ -523,7 +680,7 @@ namespace Amazoom
             {
                 if (product.stock < this.maxItemStock)
                 {
-                    productToRestock.Add((product, this.maxItemStock-product.stock));
+                    productToRestock.Add((product, this.maxItemStock - product.stock));
                 }
             }
 
@@ -537,10 +694,10 @@ namespace Amazoom
                         availableRestockTruck = this.restockTruckQueue.Dequeue();
                         break;
                     }
-                    else
-                    {
-                        serviceNextTruck(); //no restock truck available, service the dockingQueue trucks first and wait till restock truck put back into restockTruck queue
-                    }
+                    //else
+                    //{
+                    //    serviceNextTruck(); //no restock truck available, service the dockingQueue trucks first and wait till restock truck put back into restockTruck queue
+                    //}
                 }
 
                 availableRestockTruck.items = productToRestock; //assign a truck to bring in the inventory that needs to be replaced
@@ -555,7 +712,7 @@ namespace Amazoom
         {
             Product[] currCatalog = ReadCatalog(); //read in current inventory
             //check if item was already in our catalogue,
-            foreach(Product prod in currCatalog)
+            foreach (Product prod in currCatalog)
             {
                 if (prod.name == item.name) return;
             }
@@ -581,11 +738,11 @@ namespace Amazoom
 
         public void setOrderStatus(Order order, String status)
         {
-            foreach (Order logOrder in orderLog)
+            foreach ((Order, int) logOrder in orderLog)
             {
-                if (logOrder.id == order.id)
+                if (logOrder.Item1.id == order.id)
                 {
-                    logOrder.status = status;
+                    logOrder.Item1.status = status;
                     break;
                 }
             }
@@ -593,11 +750,11 @@ namespace Amazoom
 
         public String queryOrderStatus(Order order)
         {
-            foreach (Order logOrder in orderLog)
+            foreach ((Order, int) logOrder in orderLog)
             {
-                if (logOrder.id == order.id)
+                if (logOrder.Item1.id == order.id)
                 {
-                    return logOrder.status;
+                    return logOrder.Item1.status;
                 }
             }
             return "ORDER NOT FOUND";
