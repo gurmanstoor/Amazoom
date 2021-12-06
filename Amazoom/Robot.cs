@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Windows;
 using System.Collections.Generic;
+using System.Threading;
+
 
 namespace Amazoom
 {
@@ -13,7 +15,7 @@ namespace Amazoom
         private int[] location;
         private bool isActive = false;
         private Queue<(Item, Shelf)> robotQueue = new Queue<(Item, Shelf)>();
-
+        
 
 
         public Robot(int id, int[] location)
@@ -30,7 +32,7 @@ namespace Amazoom
          * */
         public void QueueItem((Item, Shelf) item, int quantity)
         {
-            for(int i = 0; i < quantity; i++)
+            for (int i = 0; i < quantity; i++)
             {
                 this.robotQueue.Enqueue(item);
             }
@@ -41,53 +43,68 @@ namespace Amazoom
          * @return: void
          * move robot to item's location in warehouse and retrieve item. Decrement inventory
          * */
-        public void getOrder(Order order)
+        public void getOrder(ref Mutex[,] gridCellMutices)
         {
-            List<Item> currInventory = Computer.ReadInventory();
             //process all items of current order in queue
             while (this.robotQueue.Count > 0)
             {
                 (Item, Shelf) currItem = this.robotQueue.Peek();
                 Shelf currShelf = currItem.Item2;
-                if (this.currentLoad + currItem.Item1.weight <= this.maxLoadingCap)
+                if (this.currentLoad + currItem.Item1.weight <= this.maxLoadingCap && this.currBatteryLevel > 0)
                 {
                     this.robotQueue.Dequeue();
-                    this.location = currShelf.shelfLocation.location; //location of a specific item within our warehouse grid
-                    for (int i = 0; i < currShelf.items.Count; i++) //iterate over items in that shelf and remove item being processed
+                    bool isEmpty = gridCellMutices[currShelf.shelfLocation.location[0], currShelf.shelfLocation.location[0]].WaitOne(100);
+                    if (isEmpty)
                     {
-                        if (currShelf.items[i].id == currItem.Item1.id)
+                        this.location = currShelf.shelfLocation.location; //location of a specific item within our warehouse grid
+                        this.currBatteryLevel -= 1;
+                        for (int i = 0; i < currShelf.items.Count; i++) //iterate over items in that shelf and remove item being processed
                         {
-                            currShelf.items.RemoveAt(i);
-                            currShelf.currWeight -= currItem.Item1.weight;
-                            //int idx = currInventory.FindIndex(a => a == currItem.Item1);
-                            for(int j=0; j < currInventory.Count; j++)
+                            if (currShelf.items[i].id == currItem.Item1.id)
                             {
-                                if(currInventory[j].id == currItem.Item1.id)
-                                {
-                                    currInventory.RemoveAt(j);
-                                    break;
-                                }
-                            }
-                            
+                                currShelf.items.RemoveAt(i);
+                                currShelf.currWeight -= currItem.Item1.weight;
 
+
+                            }
                         }
+                        this.currentLoad += currItem.Item1.weight;
+                        gridCellMutices[currShelf.shelfLocation.location[0], currShelf.shelfLocation.location[0]].ReleaseMutex();
                     }
-                    this.currentLoad += currItem.Item1.weight;
+                    else
+                    {
+                        this.robotQueue.Enqueue(this.robotQueue.Dequeue());
+                    }
+                }
+                else if (this.currBatteryLevel == 0)
+                {
+                    rechargeBattery();
                 }
                 else
                 {
-                    //*****move robot to dock, drop stuff off at bin, come back for remaining items
-                    this.location = new int[2] {0,0}; //this location should be wherever we de-load our items if robot capacity is full
+                    //move robot to dock, drop stuff off at bin, come back for remaining items
+                    bool isEmpty = gridCellMutices[Computer.numRows - 1, Computer.numCols - 1].WaitOne(100);
+                    if (isEmpty)
+                    {
+                        this.location = new int[2] { Computer.numRows - 1, Computer.numCols - 1 }; //this location should be wherever we de-load our items if robot capacity is full
+                        gridCellMutices[Computer.numRows - 1, Computer.numCols - 1].ReleaseMutex();
+                    }
+
                     this.currentLoad = 0.0; //reset load
 
                 }
             }
             //order completed, queue item for delivery
-            Computer.processedOrders.Enqueue(order);
-            Computer.UpdateInventory(currInventory);
+            this.location = new int[2] { -1, -1 };
             return;
         }
 
+        private void rechargeBattery()
+        {
+            this.location = new int[2] { -1, -1 }; //move rebot to charging station for battery replacement outside of the warehouse
+            this.currBatteryLevel = 100.0;
+            return;
+        }
 
         //setters and getters
         public void setActiveStatus(bool isActive)
@@ -118,6 +135,15 @@ namespace Amazoom
         public double getBatteryLevel()
         {
             return this.currBatteryLevel;
+        }
+        public int getId()
+        {
+            return this.id;
+        }
+
+        public bool queueIsEmpty()
+        {
+            return this.robotQueue.Count == 0;
         }
 
     }

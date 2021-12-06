@@ -1,4 +1,215 @@
-﻿using System;
+﻿//using System;
+//using System.Threading;
+//using System.Windows;
+//using System.Collections.Generic;
+
+//namespace Amazoom
+//{
+//    public class Admin
+//    {
+//        private static Computer warehouse;
+//        private static Queue<Order> receivedOrders = new Queue<Order>();
+//        //private static bool deliveryFlag = false;
+//        private static int deliveryInterval = 10;
+//        private Thread timeThread = new Thread(() => deliveryTimer(deliveryInterval));
+
+//        private List<Thread> orderThreads = new List<Thread>();
+
+//        public Admin()
+//        {
+//            warehouse = new Computer();
+//            timeThread.Start();
+//            startAdmin();
+
+//        }
+
+//        public void startAdmin()
+//        {
+//            while (true)
+//            {
+//                displayAdmin();
+//                break;
+//            }
+
+//            Console.WriteLine("Goodbye!");
+//        }
+//        public void displayAdmin()
+//        {
+//            Console.WriteLine("------------------------------------");
+//            Console.WriteLine("|           ADMIN CONSOLE          |");
+//            Console.WriteLine("------------------------------------");
+//            Console.WriteLine("1: View All Orders ");
+//            Console.WriteLine("2: View Inventory ");
+//            Console.WriteLine("3: Exit Console ");
+//            Console.WriteLine("------------------------------------");
+//            Console.WriteLine("Enter Option: ");
+//            string line = Console.ReadLine();
+//            int option;
+
+//            while (true)
+//            {
+//                if (!int.TryParse(line, out option))
+//                {
+//                    Console.WriteLine("Enter an integer value: ");
+//                    line = Console.ReadLine();
+//                }
+//                else if (option > 3 || option < 1)
+//                {
+//                    Console.WriteLine("Enter a valid integer (1 to 3): ");
+//                    line = Console.ReadLine();
+//                }
+//                else
+//                {
+//                    break;
+//                }
+//            }
+//            if(option == 1)
+//            {
+//                viewOrders();
+//            }
+//            else if (option == 2)
+//            {
+//                viewStock();
+//            }
+//            else
+//            {
+//                return;
+//            }
+//        }
+
+//        public void viewOrders()
+//        {
+//            Console.WriteLine("------------------------------------");
+//            Console.WriteLine("|              ORDERS              |");
+//            Console.WriteLine("------------------------------------");
+
+//            foreach((Order,int) order in warehouse.orderLog)
+//            {
+//                Console.WriteLine("OrderID: {0}, status: {1}", order.Item1.id, order.Item1.status);
+//            }
+//            Console.WriteLine("------------------------------------");
+//            Console.WriteLine("Press Enter to return to the console");
+//            Console.ReadLine();
+//            displayAdmin();
+//        }
+
+//        public void viewStock()
+//        {
+//            Product[] products = Computer.ReadCatalog();
+//            Console.WriteLine("------------------------------------");
+//            Console.WriteLine("|             Products             |");
+//            Console.WriteLine("------------------------------------");
+//            foreach (var item in products)
+//            {
+//                Console.WriteLine("Product: {0}, Price: {1}, ID: {2}, Stock: {3}", item.name, item.price, item.id, item.stock);
+//            }
+//            Console.WriteLine("------------------------------------");
+//            Console.WriteLine("Press Enter to return to the console");
+//            Console.ReadLine();
+//            displayAdmin();
+//        }
+
+//        public void notifyAdmin(Product item)
+//        {
+//            Console.WriteLine("------------------------------------");
+//            Console.WriteLine("|             *ALERT*              |");
+//            Console.WriteLine("------------------------------------");
+//            Console.WriteLine("Product: {0}, ID: {1}, Is Out of Stock: Ordering More...", item.name, item.id);
+
+//            warehouse.ReadAndReplaceCatalogStock();
+
+//            Console.WriteLine("------------------------------------");
+//            Console.WriteLine("Press Enter to return to the console");
+//            Console.ReadLine();
+//            displayAdmin();
+//        }
+
+//        public void sendOrder(Order newOrder)
+//        {
+//            warehouse.fulfillOrder(newOrder);
+//            double orderWeight = 0;
+//            foreach (Order order in Computer.processedOrders)
+//            {
+//                foreach ((Product, int) item in order.products)
+//                {
+//                    orderWeight += item.Item1.weight * item.Item2;  // order has multiple quantities
+//                    if (orderWeight > warehouse.maxTruckCapacity)
+//                    {
+//                        bool needNewTruck = true;
+//                        foreach (Truck truck in warehouse.dockingQueue)
+//                        {
+//                            if (truck.GetType() == typeof(DeliveryTruck))
+//                            {
+//                                needNewTruck = false;
+//                                break;
+//                            }
+//                        }
+//                        DeliveryTruck currTruck = warehouse.serviceNextTruck(needNewTruck);
+//                        warehouse.loadProcessedOrders(currTruck);
+//                    }
+//                }
+//            }
+//        }
+
+//        public static void deliveryTimer(int interval)
+//        {
+//            while (true)
+//            {
+//                if (warehouse.orderLog.Count > 0)
+//                {
+//                    int timeDifference =
+//                        (int)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds - warehouse.orderLog[warehouse.orderLog.Count - 1].Item2;
+
+//                    if(timeDifference > interval && Computer.processedOrders.Count > 0)
+//                    {
+//                        bool needNewTruck = true;
+//                        foreach (Truck truck in warehouse.dockingQueue)
+//                        {
+//                            if (truck.GetType() == typeof(DeliveryTruck))
+//                            {
+//                                needNewTruck = false;
+//                                break;
+//                            }
+//                        }
+//                        DeliveryTruck currTruck = warehouse.serviceNextTruck(needNewTruck);
+//                        warehouse.loadProcessedOrders(currTruck);
+//                    }
+
+//                }
+//            }
+//        }
+
+//        //public void sendOrder(Order order)
+//        //{
+//        //    receivedOrders.Enqueue(order);
+//        //    if(orderThreads.Count < numRobots)
+//        //    {
+//        //        Robot robot = warehouse.standbyRobots.Dequeue();
+//        //        Thread thread = new Thread(() => warehouse.fulfillOrder(order, robot));
+//        //        orderThreads.Add(thread);
+//        //        warehouse.workingRobots.Add(robot);
+//        //        thread.Start();
+//        //        thread.Join();
+//        //        for(int i =0; i<warehouse.workingRobots.Count; i++)
+//        //        {
+//        //            if(warehouse.workingRobots[i].getId() == robot.getId())
+//        //            {
+//        //                warehouse.workingRobots.RemoveAt(i);
+//        //                warehouse.standbyRobots.Enqueue(robot);
+
+//        //            }
+//        //        }
+
+//        //    }
+
+//        //}
+
+//    }
+//}
+
+
+using System;
+using System.Threading;
 using System.Windows;
 using System.Collections.Generic;
 
@@ -6,14 +217,24 @@ namespace Amazoom
 {
     public class Admin
     {
+
         private static Computer warehouse;
+
+        private static Queue<Order> receivedOrders = new Queue<Order>();
+        //private static bool deliveryFlag = false;
+        private static int deliveryInterval = 10;
+        private Thread timeThread = new Thread(() => deliveryTimer(deliveryInterval));
+
+        private List<Thread> orderThreads = new List<Thread>();
+
 
         public Admin()
         {
             // Create a new warehouse
             warehouse = new Computer();
-            // Start Admin console
-            startAdmin();
+
+            timeThread.Start();
+
         }
 
         /*
@@ -46,7 +267,8 @@ namespace Amazoom
             Console.WriteLine("------------------------------------");
             Console.WriteLine("1: View All Orders ");
             Console.WriteLine("2: View Inventory ");
-            Console.WriteLine("3: Exit Console ");
+            Console.WriteLine("3: View Alerts ");
+            Console.WriteLine("4: Exit Console ");
             Console.WriteLine("------------------------------------");
             Console.WriteLine("Enter Option: ");
             string line = Console.ReadLine();
@@ -63,13 +285,15 @@ namespace Amazoom
                     line = Console.ReadLine();
                 }
                 // Confirm option selected is in menu
-                else if (option > 3 || option < 1)
+
+                else if (option > 4 || option < 1)
                 {
                     // Re-prompt user for new int in menu
-                    Console.WriteLine("Enter a valid integer (1 to 3): ");
+                    Console.WriteLine("Enter a valid integer (1 to 4): ");
                     line = Console.ReadLine();
                 }
-                // Break out of the looponce a correct option is selected
+                // Break out of the loop once a correct option is selected
+
                 else
                 {
                     break;
@@ -85,6 +309,13 @@ namespace Amazoom
             {
                 viewStock();
             }
+
+            // view alerts
+            else if (option == 3)
+            {
+                notifyAdmin();
+            }
+
             // Exit the console
             else
             {
@@ -105,10 +336,11 @@ namespace Amazoom
             Console.WriteLine("------------------------------------");
 
             // Loop through order log
-            foreach (Order order in warehouse.orderLog)
+
+            foreach ((Order, int) order in warehouse.orderLog)
             {
-                // display order log and status
-                Console.WriteLine("OrderID: {0}, status: {1}", order.id, order.status);
+                Console.WriteLine("OrderID: {0}, status: {1}", order.Item1.id, order.Item1.status);
+
             }
             Console.WriteLine("------------------------------------");
             Console.WriteLine("Press Enter to return to the console");
@@ -127,7 +359,7 @@ namespace Amazoom
             // Console output
             Console.Clear();
             Console.WriteLine("------------------------------------");
-            Console.WriteLine("|             Products             |");
+            Console.WriteLine("|             PRODUCTS             |");
             Console.WriteLine("------------------------------------");
 
             // Read catalogue JSON file
@@ -147,35 +379,103 @@ namespace Amazoom
             displayAdmin();
         }
 
-        /*
-         * @return: void
-         * @param: Order item from server that contains all the products that a client wishes to order
-         * Sends client order to warehouse to be fulfilled and sent out for delivery
-         */
-        public void sendOrder(Order order)
+        public void sendOrder(Order newOrder)
         {
-            warehouse.fulfillOrder(order);
+            warehouse.fulfillOrder(newOrder);
+            double orderWeight = 0;
+            foreach (Order order in Computer.processedOrders)
+            {
+                foreach ((Product, int) item in order.products)
+                {
+                    orderWeight += item.Item1.weight * item.Item2;  // order has multiple quantities
+                    if (orderWeight > warehouse.maxTruckCapacity)
+                    {
+                        bool needNewTruck = true;
+                        foreach (Truck truck in warehouse.dockingQueue)
+                        {
+                            if (truck.GetType() == typeof(DeliveryTruck))
+                            {
+                                needNewTruck = false;
+                                break;
+                            }
+                        }
+                        DeliveryTruck currTruck = warehouse.serviceNextTruck(needNewTruck);
+                        warehouse.loadProcessedOrders(currTruck);
+                    }
+                }
+            }
+        }
+
+
+        public static void deliveryTimer(int interval)
+        {
+            while (true)
+            {
+                if (warehouse.orderLog.Count > 0)
+                {
+                    int timeDifference =
+                        (int)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds - warehouse.orderLog[warehouse.orderLog.Count - 1].Item2;
+
+                    if (timeDifference > interval && Computer.processedOrders.Count > 0)
+                    {
+                        bool needNewTruck = true;
+                        foreach (Truck truck in warehouse.dockingQueue)
+                        {
+                            if (truck.GetType() == typeof(DeliveryTruck))
+                            {
+                                needNewTruck = false;
+                                break;
+                            }
+                        }
+                        DeliveryTruck currTruck = warehouse.serviceNextTruck(needNewTruck);
+                        warehouse.loadProcessedOrders(currTruck);
+                    }
+
+                }
+            }
         }
 
         /*
          * @return: void
-         * @Param: takes a product object that is out of stock
          * Ouptuts an alert and then calls on the warehouse to replace all items that are below max capacity
          */
-        public void notifyAdmin(Product item)
+        public void notifyAdmin()
+
         {
             // Console output
             Console.Clear();
             Console.WriteLine("------------------------------------");
-            Console.WriteLine("|              *ALERT*             |");
+            Console.WriteLine("|              *ALERTS*            |");
             Console.WriteLine("------------------------------------");
-            Console.WriteLine("Product: {0} is out of stock, replenishing stock...", item.name);
 
-            // Replace all items that are below ax capacity stock
-            warehouse.ReadAndReplaceCatalogStock();
+            Product[] products = Computer.ReadCatalog();
+            foreach (var item in products)
+            {
+                if (item.stock == 0)
+                {
+                    Console.WriteLine("Product: {0} is out of stock", item.name);
+                }
+            }
 
             Console.WriteLine("------------------------------------");
-            Console.WriteLine("Press Enter to return to the console");
+            Console.WriteLine("Press Enter to replenish stock");
+            Console.ReadLine();
+
+            // Replace all items that are below max capacity stock
+            int truckId = warehouse.ReadAndReplaceCatalogStock();
+            if (truckId == -1)
+            {
+                Console.WriteLine("------------------------------------");
+                Console.WriteLine("Restock truck failed");
+                Console.WriteLine("Restock truck will be resent");
+            }
+            else 
+            {
+                Console.WriteLine("------------------------------------");
+                Console.WriteLine("Restock truck {0] has arrived to the warehouse and will be serviced soon");
+            }
+            
+            Console.WriteLine("Press Enter to return to Admin menu");
             Console.ReadLine();
 
             // Return to admin console

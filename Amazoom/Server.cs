@@ -20,19 +20,18 @@ namespace Amazoom
         private static readonly byte[] buffer = new byte[BUFFER_SIZE];
         private static int orderID = 0;
 
-        private static Admin admin;
+        private static Admin admin = new Admin();
+        private static Thread thread;
 
         static void Main()
         {
-            //Start up server concurrently
-            Thread thread = new Thread(SetupServer);
+            // Start up admin concurrently 
+            thread = new Thread(() => admin.startAdmin());
             thread.Start();
 
-            // Add a new Admin and warehouse
-            admin = new Admin();
+            // Setup server
+            SetupServer();
 
-            // When we press enter close everything
-            Console.ReadLine();
             //Join threads before closing the program
             thread.Join();
             //Close all sockets on program closure
@@ -84,7 +83,9 @@ namespace Amazoom
                 socket = serverSocket.EndAccept(AR);
             }
             // Catch error if socket is disposed
-            catch (ObjectDisposedException) 
+
+            catch (ObjectDisposedException)
+
             {
                 return;
             }
@@ -110,7 +111,8 @@ namespace Amazoom
             int result;
             List<(Product, int)> orderItems = new List<(Product, int)>();
             bool restock = false;
-            Product restockProduct = new Product();
+            List<Product> restockProducts = new List<Product>();
+
 
             // Try Catch Block: Get number of bytes recieved
             try
@@ -157,10 +159,10 @@ namespace Amazoom
             {
                 // Increase number of total orders processed
                 orderID++;
-                
+
                 // Get the catalogue ID's for the order
                 string[] orders = text.Split(";").ToArray();
-                
+
                 // Read the Catalogue JSON file
                 Product[] products = Computer.ReadCatalog();
 
@@ -174,11 +176,11 @@ namespace Amazoom
                         products[result].stock = products[result].stock - 1;
 
                         // CHeck if the product needs to be restocked
-                        if(products[result].stock == 0)
+                        if (products[result].stock == 0)
                         {
                             // Initialize restock items
                             restock = true;
-                            restockProduct = products[result];
+                            restockProducts.Add(products[result]);
                         }
 
                         // Check the first product in the cart
@@ -217,15 +219,9 @@ namespace Amazoom
                 //Console.WriteLine("Client disconnected");
 
                 // Send order to warehouse to be completed
-                admin.sendOrder(new Order(orderID, orderItems, ""));
 
-                // Notify admin to restock their warehouse
-                if (restock)
-                {
-                    admin.notifyAdmin(restockProduct);
-                }
+                admin.sendOrder(new Order(orderID, orderItems, ""));
             }
         }
     }
 }
-

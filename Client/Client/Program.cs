@@ -157,8 +157,8 @@ namespace Amazoom
                     // Release the socket.
                     sender.Shutdown(SocketShutdown.Both);
                     sender.Close();
-                    
-                    
+
+
                 }
                 catch (ArgumentNullException ane)
                 {
@@ -334,7 +334,7 @@ namespace Amazoom
                 else
                 {
                     checkout(cart);
-                }           
+                }
             }
 
             // Return to home screen
@@ -491,11 +491,12 @@ namespace Amazoom
 
                 // Place order and send it to the server
                 sendCart(cart);
+                cart.Clear();
             }
 
             // Return to the home screen
             displayStore(cart);
-            
+
         }
 
         /*
@@ -595,5 +596,7 @@ namespace Amazoom
             // Display exit message
             Console.WriteLine("Goodbye! Please shop at AMAZOOM again!");
         }
+
+        
     }
 }
