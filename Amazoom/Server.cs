@@ -36,6 +36,8 @@ namespace Amazoom
             thread.Join();
             //Close all sockets on program closure
             CloseAllSockets();
+            Console.WriteLine("Closing server");
+            Environment.Exit(0);
         }
 
         /*

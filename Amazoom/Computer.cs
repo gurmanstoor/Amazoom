@@ -138,6 +138,7 @@ namespace Amazoom
         public readonly int maxItemStock = 5; //****how do we determine what the max number of stock for each item is? based on shelves and total items??
         public static int numRows;
         public static int numCols;
+        public static int height;
         public static int invId=0;
 
         //order status keywords
@@ -147,6 +148,8 @@ namespace Amazoom
         public readonly string ORDER_DELIVERY = "ORDER OUT FOR DELIVERY";
         public readonly string ORDER_DELIVERED = "ORDER HAS BEEN DELIVERED";
         public readonly string ORDER_RECEIVED = "ORDER RECEIVED";
+        public readonly string DISCONTINUED_ITEM = "DISCONTINUED ITEMS HAVE BEEN PICKED UP";
+        public readonly string DISCONTINUED_ORDER = "DISCONTINUED ITEMS HAVE LEFT THE WAREHOUSE";
 
         public static ConcurrentQueue<Order> processedOrders = new ConcurrentQueue<Order>(); //queue to identify which orders are ready for delivery, will be loaded into trucks on a FIFO basis
         public static List<Order> orderBin { get; set; } //bin to hold orders that are being completed, will be pushed into queue when status indicates FINISHED
@@ -156,12 +159,46 @@ namespace Amazoom
         public ConcurrentQueue<DeliveryTruck> deliveryTruckQueue = new ConcurrentQueue<DeliveryTruck>();
 
 
-        public Computer()
+        public Computer(int size)
         {
             //initialize warehouse shelves, robots, and trucks
+            if(size == 0)
+            {
+                numRows = 3;
+                numCols = 5;
+                height = 2;
+            }
+            else if (size == 02)
+            {
+                numRows = 7;
+                numCols = 10;
+                height = 4;
+            }
+            else
+            {
+                numRows = 5;
+                numCols = 7;
+                height = 3;
+            }
+
+            initializeInventory(size);
             initializeShelves();
             initializeRobots();
             initializeTrucks();
+        }
+
+        private void initializeInventory(int size)
+        {
+            
+            string fileName = "../../../defaultCatalogue.json";
+            string jsonString = File.ReadAllText(fileName);
+            Product[] products = JsonSerializer.Deserialize<Product[]>(jsonString);
+            UpdateCatalog(products);
+
+            string fileName2 = "../../../defaultInventory.json";
+            string jsonString2 = File.ReadAllText(fileName2);
+            List<Item> items = JsonSerializer.Deserialize<List<Item>>(jsonString2);
+            UpdateInventory(items);
         }
 
         /*
@@ -201,9 +238,9 @@ namespace Amazoom
          * */
         private void initializeShelves()
         {
-            numRows = 3;
-            numCols = 4;
-            int height = 2;
+           // numRows = 3;
+           // numCols = 4;
+           // int height = 2;
             int numShelves = (numCols - 1) * (numRows - 2) * height * 2;
 
             gridCellMutices = new Mutex[numRows, numCols];
@@ -335,6 +372,10 @@ namespace Amazoom
 
                 collectOrder(order);
                 setOrderStatus(order, this.ORDER_FULFILLED);
+                if(order.id == -1)
+                {
+                    setOrderStatus(order, this.DISCONTINUED_ITEM);
+                }
 
                 //bool needNewTruck = true;
                 //foreach(Truck truck in this.dockingQueue)
@@ -601,7 +642,16 @@ namespace Amazoom
             foreach (Order order in truck.orders)
             {
                 Thread.Sleep(10);
-                setOrderStatus(order, this.ORDER_DELIVERED);
+                if (order.id == -1)
+                {
+                    setOrderStatus(order, this.DISCONTINUED_ORDER);
+                }
+                else 
+                { 
+                    setOrderStatus(order, this.ORDER_DELIVERED); 
+                }
+
+                
             }
             truck.orders.Clear();
             Console.WriteLine("Truck {0} has delivered all items and has returned to warehouse.", truck.id);
@@ -643,7 +693,7 @@ namespace Amazoom
         {
             List<Item> inventory = ReadInventory();
 
-            newItem.id = invId+1;
+            newItem.id = invId;
             invId += 1;
 
             Random rand = new Random();
@@ -678,7 +728,7 @@ namespace Amazoom
             List<(Product, int)> productToRestock = new List<(Product, int)>();
             foreach (Product product in currentCatalog)
             {
-                if (product.stock < this.maxItemStock)
+                if ((product.stock < this.maxItemStock) && product.stock!=-1)
                 {
                     productToRestock.Add((product, this.maxItemStock - product.stock));
                 }
@@ -710,7 +760,7 @@ namespace Amazoom
         }
 
         //only adds an item to our catalogue of available items, doesn't actually place anything in the inventory
-        public void AddNewCatalogItem(Product item)
+        public static void AddNewCatalogItem(Product item)
         {
             Product[] currCatalog = ReadCatalog(); //read in current inventory
             //check if item was already in our catalogue,
@@ -729,7 +779,6 @@ namespace Amazoom
             updatedCatalog[updatedCatalog.Length - 1] = item; //add the newest item
             UpdateCatalog(updatedCatalog); //update the inventory JSON file
             // ***** check to see if the item already exists to avoid accidental duplicates
-
         }
 
         public string notifyUser(Order order)

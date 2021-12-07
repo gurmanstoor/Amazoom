@@ -317,6 +317,7 @@ namespace Amazoom
             if (option == 1)
             {
                 removeCart(cart);
+
             }
 
             // Checkout the cart
