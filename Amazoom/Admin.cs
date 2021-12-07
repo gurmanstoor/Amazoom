@@ -21,7 +21,7 @@ namespace Amazoom
         public Admin()
         {
             Console.WriteLine("------------------------------------");
-            Console.WriteLine("Do you wish to access the small, medium or large warehouse");
+            Console.WriteLine("Do you wish to create a small, medium or large warehouse");
             Console.WriteLine("------------------------------------");
             Console.WriteLine("1: Small");
             Console.WriteLine("2: Medium");
@@ -152,7 +152,7 @@ namespace Amazoom
 
             foreach ((Order, int) order in warehouse.orderLog)
             {
-                Console.WriteLine("OrderID: {0}, status: {1} OrderItems Count{2}", order.Item1.id, order.Item1.status, order.Item1.products.Count);
+                Console.WriteLine("OrderID: {0}, status: {1}", order.Item1.id, order.Item1.status);
 
             }
             Console.WriteLine("------------------------------------");
@@ -188,7 +188,6 @@ namespace Amazoom
             Console.WriteLine("1: Discontinue item");
             Console.WriteLine("2: Add items to Catalogue");
             Console.WriteLine("3: Return to the console");
-            
             Console.WriteLine("------------------------------------");
             Console.WriteLine("Enter Option: ");
 
@@ -410,9 +409,6 @@ namespace Amazoom
 
                 Console.WriteLine("Press Enter to return to Admin menu");
                 Console.ReadLine();
-
-                // Replace all items that are below max capacity stock
-                //warehouse.ReadAndReplaceCatalogStock();
 
                 // Return to admin console
                 displayAdmin();

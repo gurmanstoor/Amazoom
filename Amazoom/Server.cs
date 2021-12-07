@@ -118,8 +118,6 @@ namespace Amazoom
             int received;
             int result;
             List<(Product, int)> orderItems = new List<(Product, int)>();
-            bool restock = false;
-            List<Product> restockProducts = new List<Product>();
 
             // Try Catch Block: Get number of bytes recieved
             try
@@ -239,12 +237,11 @@ namespace Amazoom
                     // Send order to warehouse to be completed
                     admin.sendOrder(new Order(orderID, orderItems, ""));
                 }
-
-                // Always Shutdown before closing
-                current.Shutdown(SocketShutdown.Both);
-                current.Close();
-                clientSockets.Remove(current);
             }
+            // Always Shutdown before closing
+            current.Shutdown(SocketShutdown.Both);
+            current.Close();
+            clientSockets.Remove(current);
         }
     }
 }

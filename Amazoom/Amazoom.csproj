@@ -3,9 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp5.0</TargetFramework>
-    <StartupObject>Amazoom.Program</StartupObject>
+    <StartupObject>Amazoom.Server</StartupObject>
   </PropertyGroup>
-  
->>>>>>> Added reserve cart option for clients
 
 </Project>

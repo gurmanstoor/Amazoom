@@ -192,6 +192,7 @@ namespace Amazoom
          */
         public static void viewProducts(List<int> cart)
         {
+            Console.Clear();
             Console.WriteLine("------------------------------------");
             Console.WriteLine("|          AMAZOOM Products        |");
             Console.WriteLine("------------------------------------");
@@ -479,21 +480,6 @@ namespace Amazoom
             // Proceed to place order
             if (option == 1)
             {
-                // Read product inventory
-                products = ReadInventory();
-
-                // Loop through client cart
-                foreach (var num in cart)
-                {
-                    // Double check there is stock of that item
-                    if (products[num].stock == 0)
-                    {
-                        // Print error and remove item from cartif out of stock
-                        Console.WriteLine("Sorry item: {0} is out of stock and has been removed from your order.", products[num].name);
-                        cart.Remove(num);
-                    }
-                }
-
                 // Place order and send it to the server
                 sendServer(cart, "cart");
                 cart.Clear();
@@ -547,7 +533,6 @@ namespace Amazoom
                     //Console.WriteLine("Socket connected to {0}", sender.RemoteEndPoint.ToString());
 
                     string result = string.Join(";", cart);
-                    Console.WriteLine("Result: " + result);
 
                     // Encode the data string into a byte array.
                     byte[] msg = Encoding.ASCII.GetBytes(cmd + ";" + result);

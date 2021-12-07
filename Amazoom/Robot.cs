@@ -83,7 +83,7 @@ namespace Amazoom
                 else
                 {
                     //move robot to dock, drop stuff off at bin, come back for remaining items
-                    bool isEmpty = gridCellMutices[Computer.numRows - 1, Computer.numCols - 1].WaitOne(100);
+                    bool isEmpty = gridCellMutices[Computer.numRows - 1, Computer.numCols - 1].WaitOne(1000);
                     if (isEmpty)
                     {
                         this.location = new int[2] { Computer.numRows - 1, Computer.numCols - 1 }; //this location should be wherever we de-load our items if robot capacity is full
