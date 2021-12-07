@@ -10,7 +10,7 @@ namespace Amazoom
 
         public ComputerTests()
         {
-            computer = new Computer();
+            computer = new Computer(0);
             testProducts = new Product[3] { new Product("prod1", 100, 99), new Product("prod2", 100, 99), new Product("prod3", 100, 99) };
         }
 
@@ -22,7 +22,7 @@ namespace Amazoom
             foreach (Product product in testProducts)
             {
                 product.stock = 0;
-                computer.AddNewCatalogItem(product);
+                Computer.AddNewCatalogItem(product);
             }
 
             Product[] currCatalog = Computer.ReadCatalog();

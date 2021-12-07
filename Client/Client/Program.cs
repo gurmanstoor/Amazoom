@@ -192,6 +192,7 @@ namespace Amazoom
          */
         public static void viewProducts(List<int> cart)
         {
+            Console.Clear();
             Console.WriteLine("------------------------------------");
             Console.WriteLine("|          AMAZOOM Products        |");
             Console.WriteLine("------------------------------------");
@@ -375,6 +376,8 @@ namespace Amazoom
                     // Add item to the cart if in stock
                     cart.Add(id);
                     Console.WriteLine("Product added to cart!");
+
+                    sendServer(new List<int> { id }, "add");
                 }
 
                 // Not in stock
@@ -414,6 +417,8 @@ namespace Amazoom
                 // Remove product from client cart
                 cart.Remove(id);
                 Console.WriteLine("Item removed from cart.");
+
+                sendServer(new List<int> { id }, "rem");
             }
             // Return to cart screen
             viewCart(cart);
@@ -475,23 +480,8 @@ namespace Amazoom
             // Proceed to place order
             if (option == 1)
             {
-                // Read product inventory
-                products = ReadInventory();
-
-                // Loop through client cart
-                foreach (var num in cart)
-                {
-                    // Double check there is stock of that item
-                    if (products[num].stock == 0)
-                    {
-                        // Print error and remove item from cartif out of stock
-                        Console.WriteLine("Sorry item: {0} is out of stock and has been removed from your order.", products[num].name);
-                        cart.Remove(num);
-                    }
-                }
-
                 // Place order and send it to the server
-                sendCart(cart);
+                sendServer(cart, "cart");
                 cart.Clear();
             }
 
@@ -517,7 +507,7 @@ namespace Amazoom
          * @Param: takes a clients active cart in the form of a list
          * Sends the cart to the server through sockets
          */
-        public static void sendCart(List<int> cart)
+        public static void sendServer(List<int> cart, string cmd)
         {
             byte[] bytes = new byte[1024];
 
@@ -545,7 +535,7 @@ namespace Amazoom
                     string result = string.Join(";", cart);
 
                     // Encode the data string into a byte array.
-                    byte[] msg = Encoding.ASCII.GetBytes(result);
+                    byte[] msg = Encoding.ASCII.GetBytes(cmd + ";" + result);
 
                     // Send the data through the socket.
                     int bytesSent = sender.Send(msg);

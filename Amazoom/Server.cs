@@ -33,6 +33,7 @@ namespace Amazoom
             SetupServer();
 
             //Join threads before closing the program
+            //Console.ReadLine();
             thread.Join();
             //Close all sockets on program closure
             CloseAllSockets();
@@ -50,6 +51,7 @@ namespace Amazoom
             serverSocket.Bind(new IPEndPoint(ipAddress, PORT));
             serverSocket.Listen(1);
             serverSocket.BeginAccept(AcceptCallback, null);
+            //Console.WriteLine("Setting up server");
         }
 
         /*
@@ -76,6 +78,7 @@ namespace Amazoom
          */
         private static void AcceptCallback(IAsyncResult AR)
         {
+            //Console.WriteLine("Accept call back");
             Socket socket;
 
             // Try Catch block: stop accepting server socket clients
@@ -108,13 +111,13 @@ namespace Amazoom
          */
         private static void ReceiveCallback(IAsyncResult AR)
         {
+
+            //Console.WriteLine("Recieve call back");
+
             Socket current = (Socket)AR.AsyncState;
             int received;
             int result;
             List<(Product, int)> orderItems = new List<(Product, int)>();
-            bool restock = false;
-            List<Product> restockProducts = new List<Product>();
-
 
             // Try Catch Block: Get number of bytes recieved
             try
@@ -156,74 +159,89 @@ namespace Amazoom
                 //Console.WriteLine("json sent to client");
 
             }
-            // Order from client
             else
             {
-                // Increase number of total orders processed
-                orderID++;
-
                 // Get the catalogue ID's for the order
                 string[] orders = text.Split(";").ToArray();
 
-                // Read the Catalogue JSON file
-                Product[] products = Computer.ReadCatalog();
-
-                // Loop through the order and decrement stock
-                for (int i = 0; i < orders.Length; i++)
+                // Order from client
+                if (orders[0] == "rem")
                 {
+                    // Read the Catalogue JSON file
+                    Product[] products = Computer.ReadCatalog();
+
                     // Confirm the order number is an int
-                    if (int.TryParse(orders[i], out result))
+                    if (int.TryParse(orders[1], out result))
+                    {
+                        // Increment stock of the order product
+                        products[result].stock = products[result].stock + 1;
+                    }
+
+                    // Update the JSON file with the new stock after the order is fulfilled
+                    Computer.UpdateCatalog(products);
+                }
+                else if (orders[0] == "add")
+                {
+                    // Read the Catalogue JSON file
+                    Product[] products = Computer.ReadCatalog();
+
+                    // Confirm the order number is an int
+                    if (int.TryParse(orders[1], out result))
                     {
                         // Decrement stock of the order product
                         products[result].stock = products[result].stock - 1;
+                    }
 
-                        // CHeck if the product needs to be restocked
-                        if (products[result].stock == 0)
-                        {
-                            // Initialize restock items
-                            restock = true;
-                            restockProducts.Add(products[result]);
-                        }
+                    // Update the JSON file with the new stock after the order is fulfilled
+                    Computer.UpdateCatalog(products);
+                }
+                else if (orders[0] == "cart")
+                {
+                    // Increase number of total orders processed
+                    orderID++;
 
-                        // Check the first product in the cart
-                        if (i == 0)
+                    // Read the Catalogue JSON file
+                    Product[] products = Computer.ReadCatalog();
+
+                    // Loop through the order and decrement stock
+                    for (int i = 1; i < orders.Length; i++)
+                    {
+                        if (int.TryParse(orders[i], out result))
                         {
-                            // Add the product directly to the order Lsit
-                            orderItems.Add((products[i], 1));
-                        }
-                        else
-                        {
-                            // Loop through the processed order list
-                            for (int j = 0; j < orderItems.Count(); j++)
+                            // Check the first product in the cart
+                            if (i == 1)
                             {
-                                // If the product is already in the list, increment quantity needed
-                                if (orderItems[j].Item1.name == products[result].name)
+                                // Add the product directly to the order Lsit
+                                orderItems.Add((products[i], 1));
+                            }
+                            else
+                            {
+                                // Loop through the processed order list
+                                for (int j = 0; j < orderItems.Count(); j++)
                                 {
-                                    orderItems[j] = (orderItems[j].Item1, orderItems[j].Item2 + 1);
-                                }
-                                // If a new product, add it to the list
-                                else
-                                {
-                                    orderItems.Add((products[result], 1));
+                                    // If the product is already in the list, increment quantity needed
+                                    if (orderItems[j].Item1.name == products[result].name)
+                                    {
+                                        orderItems[j] = (orderItems[j].Item1, orderItems[j].Item2 + 1);
+                                    }
+                                    // If a new product, add it to the list
+                                    else
+                                    {
+                                        orderItems.Add((products[result], 1));
+                                    }
                                 }
                             }
                         }
                     }
+
+                    // Send order to warehouse to be completed
+                    admin.sendOrder(new Order(orderID, orderItems, ""));
                 }
-
-                // Update the JSON file with the new stock after the order is fulfilled
-                Computer.UpdateCatalog(products);
-
-                // Always Shutdown before closing
-                current.Shutdown(SocketShutdown.Both);
-                current.Close();
-                clientSockets.Remove(current);
-                //Console.WriteLine("Client disconnected");
-
-                // Send order to warehouse to be completed
-
-                admin.sendOrder(new Order(orderID, orderItems, ""));
             }
+            // Always Shutdown before closing
+            current.Shutdown(SocketShutdown.Both);
+            current.Close();
+            clientSockets.Remove(current);
         }
     }
 }

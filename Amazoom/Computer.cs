@@ -296,7 +296,7 @@ namespace Amazoom
 
                     for(int row=0; row < numRows; row++)
                     {
-                        gridCellMutices[row,i] = new Mutex();
+                        gridCellMutices[row,j] = new Mutex();
                     }
                 }
 
@@ -548,7 +548,7 @@ namespace Amazoom
                 {
                     Console.WriteLine("ERROR: ORDER WEIGHT EXCEEDS TRUCK CAPACITY. NEED BIGGER TRUCK");
                     processedOrders.TryDequeue(out Order order);
-                    setOrderStatus(order, this.ORDER_FAILED);
+                    setOrderStatus(order, "TRUCK FAILED");
                     break;
                 }
                 else
@@ -836,19 +836,30 @@ namespace Amazoom
         {
             string fileName = "../../../catalogue.json";
             string jsonString = JsonSerializer.Serialize(newItems);
-            File.WriteAllText(fileName, jsonString);
+
+            using(var mutex = new Mutex(false, "catalog mutex"))
+            {
+                mutex.WaitOne();
+                File.WriteAllText(fileName, jsonString);
+                mutex.ReleaseMutex();
+            }
+            
 
         }
 
         public static Product[] ReadCatalog()
         {
             string fileName = "../../../catalogue.json";
-            string jsonString = File.ReadAllText(fileName);
-            //Item[] items = new Item[2];
+            string jsonString;
 
+            using (var mutex = new Mutex(false, "catalog mutex"))
+            {
+                mutex.WaitOne();
+                jsonString = File.ReadAllText(fileName);
+                mutex.ReleaseMutex();
+            }
             Product[] products = JsonSerializer.Deserialize<Product[]>(jsonString);
             return products;
         }
-
     }
 }
