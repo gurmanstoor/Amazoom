@@ -228,7 +228,37 @@ namespace Amazoom
 
         public Admin()
         {
-            warehouse = new Computer();
+            Console.WriteLine("------------------------------------");
+            Console.WriteLine("Do you wish to access the small, medium or large warehouse");
+            Console.WriteLine("------------------------------------");
+            Console.WriteLine("1: Small");
+            Console.WriteLine("2: Medium");
+            Console.WriteLine("3: Large");
+            string line = Console.ReadLine();
+            int option;
+            while (true)
+            {
+                // Confirm the option is an int
+                if (!int.TryParse(line, out option))
+                {
+                    // Re-prompt user if not an int
+                    Console.WriteLine("Enter an integer value: ");
+                    line = Console.ReadLine();
+                }
+                // Confirm option selected is in menu
+                else if (option > 3 || option < 1)
+                {
+                    // Re-prompt user for new int in menu
+                    Console.WriteLine("Enter a valid integer (1 to 3): ");
+                    line = Console.ReadLine();
+                }
+                // Break out of the loop once a correct option is selected
+                else
+                {
+                    break;
+                }
+            }
+            warehouse = new Computer(option);
             timeThread.Start();
 
         }
@@ -329,7 +359,7 @@ namespace Amazoom
             // Loop through order log
             foreach ((Order, int) order in warehouse.orderLog)
             {
-                Console.WriteLine("OrderID: {0}, status: {1}", order.Item1.id, order.Item1.status);
+                Console.WriteLine("OrderID: {0}, status: {1} OrderItems Count{2}", order.Item1.id, order.Item1.status, order.Item1.products.Count);
             }
             Console.WriteLine("------------------------------------");
             Console.WriteLine("Press Enter to return to the console");
@@ -360,9 +390,99 @@ namespace Amazoom
                 // Display products and current stock
                 Console.WriteLine("Product: {0}, Price: {1}, ID: {2}, Stock: {3}", item.name, item.price, item.id, item.stock);
             }
+            
+            Console.WriteLine("1: Discontinue item");
+            Console.WriteLine("2: Add items to Catalogue");
+            Console.WriteLine("3: Return to the console");
+            
             Console.WriteLine("------------------------------------");
-            Console.WriteLine("Press Enter to return to the console");
-            Console.ReadLine();
+            Console.WriteLine("Enter Option: ");
+
+            string line = Console.ReadLine();
+            int option;
+            while (true)
+            {
+                if (!int.TryParse(line, out option))
+                {
+                    // Re-prompt user if not an int
+                    Console.WriteLine("Enter an integer value: ");
+                    line = Console.ReadLine();
+                }
+                // Confirm option selected is in menu
+                else if (option == 1)
+                {
+                    // Re-prompt user for new int in menu
+                    Console.WriteLine("Enter the Product id you wish to discontiue:");
+                    line = Console.ReadLine();
+                    while (true)
+                    {
+                        if (!int.TryParse(line, out option))
+                        {
+                            // Re-prompt user if not an int
+                            Console.WriteLine("Enter an integer value: ");
+                            line = Console.ReadLine();
+                        }
+                        else if(option>=0 && option<products.Length)
+                        {
+                            List<(Product item, int quantity)> discontinueOrder = new List<(Product item, int quantity)>();
+                            discontinueOrder.Add((products[option], products[option].stock));
+                            sendOrder(new Order(-1, discontinueOrder, ""));
+
+                            products[option].name = products[option].name + " is now discontinued";
+                            products[option].stock = -1;
+                            Computer.UpdateCatalog(products);
+                            break;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Enter a valid integer(1 to 2):");
+                            line = Console.ReadLine();
+                        }
+
+                    }
+                    break;
+                }
+                else if(option == 2)
+                {
+                    Console.WriteLine("Enter Product name:");
+                    string name = Console.ReadLine();
+                    double weight;
+                    while (true)
+                    {
+                        Console.WriteLine("Enter Product weight:");
+                        line = Console.ReadLine();
+                        if (!double.TryParse(line, out weight))
+                        {
+                            // Re-prompt user if not an int
+                            Console.WriteLine("Weight entry invalid, please enter again");
+                            line = Console.ReadLine();
+                        }
+                        break;
+                    }
+                    double price;
+                    while (true)
+                    {
+                        Console.WriteLine("Enter Product price:");
+                        line = Console.ReadLine();
+
+                        if (!double.TryParse(line, out price))
+                        {
+                            // Re-prompt user if not an int
+                            Console.WriteLine("Price entry invalid, please enter again");
+                            line = Console.ReadLine();
+                            
+                        }
+                        break;
+                    }
+                    Computer.AddNewCatalogItem(new Product(name, weight, price));
+                    Console.WriteLine("Product added to catalogue");
+                    displayAdmin();
+                }
+                else if (option == 3) 
+                {
+                    break;
+                }
+            }
 
             // Return to console
             displayAdmin();
@@ -453,8 +573,8 @@ namespace Amazoom
             if (truckId == -1)
             {
                 Console.WriteLine("------------------------------------");
-                Console.WriteLine("Restock truck failed");
-                Console.WriteLine("Restock truck will be resent");
+                Console.WriteLine("Don't need to restock items yet");
+                
             }
             else 
             {
