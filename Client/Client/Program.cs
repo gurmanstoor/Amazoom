@@ -365,7 +365,22 @@ namespace Amazoom
             {
                 // Prompt client to provide product id
                 Console.WriteLine("Enter ID of product you would like to add: ");
-                int id = Convert.ToInt32(Console.ReadLine());
+                string line = Console.ReadLine();
+                int id;
+                while (true)
+                {
+                    // Confirm the option is an int
+                    if (!int.TryParse(line, out id))
+                    {
+                        // Re-prompt user if not an int
+                        Console.WriteLine("Enter a valid id: ");
+                        line = Console.ReadLine();
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
 
                 // Read Product inventory
                 Product[] products = ReadInventory();
@@ -412,7 +427,23 @@ namespace Amazoom
             {
                 // Prompt the client to enter product id
                 Console.WriteLine("Enter ID of product you would like to remove: ");
-                int id = Convert.ToInt32(Console.ReadLine());
+                string line = Console.ReadLine();
+                int id;
+                while (true)
+                {
+                    // Confirm the option is an int
+                    if (!int.TryParse(line, out id))
+                    {
+                        // Re-prompt user if not an int
+                        Console.WriteLine("Enter a valid id: ");
+                        line = Console.ReadLine();
+                    }
+                    
+                    else
+                    {
+                        break;
+                    }
+                }
 
                 // Remove product from client cart
                 cart.Remove(id);

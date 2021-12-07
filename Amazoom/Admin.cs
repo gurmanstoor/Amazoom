@@ -217,10 +217,11 @@ namespace Amazoom
                         }
                         else if(option>=0 && option<products.Length)
                         {
-                            List<(Product item, int quantity)> discontinueOrder = new List<(Product item, int quantity)>();
+                            /*List<(Product item, int quantity)> discontinueOrder = new List<(Product item, int quantity)>();
                             discontinueOrder.Add((products[option], products[option].stock));
                             sendOrder(new Order(-1, discontinueOrder, ""));
-
+                            */
+                            warehouse.discontiueProduct(products[option]);
                             products[option].name = products[option].name + " is now discontinued";
                             products[option].stock = -1;
                             Computer.UpdateCatalog(products);

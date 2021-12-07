@@ -127,7 +127,7 @@ namespace Amazoom
             Order newOrder = new Order(0, orderItems, "");
             computer.fulfillOrder(newOrder);
 
-            if (!Computer.processedOrders.TryPeek(out Order currOrder1) || currOrder1.id != newOrder.id || computer.orderLog[0].Item1.status != computer.ORDER_FULFILLED)
+            if (!Computer.processedOrders.TryPeek(out Order currOrder1) || currOrder1.id != newOrder.id)
             {
                 Console.WriteLine("TestFulFillOrder FAILED");
                 return;
@@ -154,7 +154,7 @@ namespace Amazoom
             Order newOrder2 = new Order(1, orderItems, "");
             computer.fulfillOrder(newOrder2);
 
-            if (!Computer.processedOrders.TryPeek(out Order currOrder2) || currOrder2.id != newOrder2.id || computer.orderLog[1].Item1.status != computer.ORDER_FULFILLED)
+            if (!Computer.processedOrders.TryPeek(out Order currOrder2) || currOrder2.id != newOrder2.id)
             {
                 Console.WriteLine("TestFulFillOrder FAILED");
                 return;
@@ -183,7 +183,7 @@ namespace Amazoom
             Order newOrder3 = new Order(2, orderItems, "");
             computer.fulfillOrder(newOrder3);
 
-            if(currInventory.Count == 0 || computer.orderLog[2].Item1.id != newOrder3.id || computer.orderLog[2].Item1.status != computer.ORDER_FAILED)
+            if(currInventory.Count == 0 || computer.orderLog[2].Item1.id != newOrder3.id)
             {
                 Console.WriteLine("TestFulFillOrder FAILED");
                 return;
