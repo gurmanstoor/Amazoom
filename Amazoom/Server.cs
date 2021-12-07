@@ -85,7 +85,9 @@ namespace Amazoom
                 socket = serverSocket.EndAccept(AR);
             }
             // Catch error if socket is disposed
+
             catch (ObjectDisposedException)
+
             {
                 return;
             }
@@ -112,6 +114,7 @@ namespace Amazoom
             List<(Product, int)> orderItems = new List<(Product, int)>();
             bool restock = false;
             List<Product> restockProducts = new List<Product>();
+
 
             // Try Catch Block: Get number of bytes recieved
             try

@@ -135,7 +135,7 @@ namespace Amazoom
         private readonly int numRobots = 5;
         private readonly int numTrucks = 5;
         public readonly double maxTruckCapacity = 10000.0;
-        private readonly int maxItemStock = 5; //****how do we determine what the max number of stock for each item is? based on shelves and total items??
+        public readonly int maxItemStock = 5; //****how do we determine what the max number of stock for each item is? based on shelves and total items??
         public static int numRows;
         public static int numCols;
         public static int height;
@@ -325,7 +325,7 @@ namespace Amazoom
             Console.WriteLine("Order {0}", order.id);
             setOrderStatus(order, this.ORDER_RECEIVED);
             orderLog.Add((order, (int)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds));
-            if (orderIsValid(order)) //helper method to validate each order to confirm if all items are available
+            if (OrderIsValid(order)) //helper method to validate each order to confirm if all items are available
             {
                 setOrderStatus(order, this.ORDER_PROCESSING);
                 //**add logic to figure out which robot is available, assign order to that robot
@@ -462,7 +462,7 @@ namespace Amazoom
          * @return: boolean
          * validates an order by ensuring all items are in inventory and stock is available
          * */
-        private bool orderIsValid(Order order)
+        public bool OrderIsValid(Order order)
         {
             List<Item> orderItems = orderToItems(order);
 
@@ -532,7 +532,7 @@ namespace Amazoom
         public void loadProcessedOrders(DeliveryTruck currTruck)
         {
             //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
-            while (processedOrders.Count > 0)
+            while (processedOrders.Count > 0) //3
             {
 
                 Order currOrder;

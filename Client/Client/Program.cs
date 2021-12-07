@@ -374,7 +374,6 @@ namespace Amazoom
                 {
                     // Add item to the cart if in stock
                     cart.Add(id);
-                    // 
                     Console.WriteLine("Product added to cart!");
                 }
 
