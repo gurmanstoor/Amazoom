@@ -375,6 +375,8 @@ namespace Amazoom
                     // Add item to the cart if in stock
                     cart.Add(id);
                     Console.WriteLine("Product added to cart!");
+
+                    sendServer(new List<int> { id }, "add");
                 }
 
                 // Not in stock
@@ -414,6 +416,8 @@ namespace Amazoom
                 // Remove product from client cart
                 cart.Remove(id);
                 Console.WriteLine("Item removed from cart.");
+
+                sendServer(new List<int> { id }, "rem");
             }
             // Return to cart screen
             viewCart(cart);
@@ -491,7 +495,7 @@ namespace Amazoom
                 }
 
                 // Place order and send it to the server
-                sendCart(cart);
+                sendServer(cart, "cart");
                 cart.Clear();
             }
 
@@ -517,7 +521,7 @@ namespace Amazoom
          * @Param: takes a clients active cart in the form of a list
          * Sends the cart to the server through sockets
          */
-        public static void sendCart(List<int> cart)
+        public static void sendServer(List<int> cart, string cmd)
         {
             byte[] bytes = new byte[1024];
 
@@ -543,9 +547,10 @@ namespace Amazoom
                     //Console.WriteLine("Socket connected to {0}", sender.RemoteEndPoint.ToString());
 
                     string result = string.Join(";", cart);
+                    Console.WriteLine("Result: " + result);
 
                     // Encode the data string into a byte array.
-                    byte[] msg = Encoding.ASCII.GetBytes(result);
+                    byte[] msg = Encoding.ASCII.GetBytes(cmd + ";" + result);
 
                     // Send the data through the socket.
                     int bytesSent = sender.Send(msg);

@@ -5,5 +5,7 @@
     <TargetFramework>netcoreapp5.0</TargetFramework>
     <StartupObject>Amazoom.Program</StartupObject>
   </PropertyGroup>
+  
+>>>>>>> Added reserve cart option for clients
 
 </Project>
