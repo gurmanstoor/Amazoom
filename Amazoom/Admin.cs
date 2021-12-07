@@ -229,7 +229,7 @@ namespace Amazoom
                         }
                         else
                         {
-                            Console.WriteLine("Enter a valid integer(1 to 2):");
+                            Console.WriteLine("Enter a valid ID within the range: ");
                             line = Console.ReadLine();
                         }
 

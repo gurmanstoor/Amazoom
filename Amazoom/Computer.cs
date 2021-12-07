@@ -60,19 +60,6 @@ namespace Amazoom
         public int height;
     }
 
-    /*public class ShelfLocation
-    {
-        public ShelfLocation(int[] location, string side, int height)
-        {
-            this.location = location;
-            this.side = side;
-            this.height = height;
-        }
-
-        public int[] location { get; set; }
-        public string side { get; set; }
-        public int height { get; set; }
-    }*/
 
     public class Order
     {
@@ -162,23 +149,26 @@ namespace Amazoom
         public Computer(int size)
         {
             //initialize warehouse shelves, robots, and trucks
-            if(size == 0)
+            if(size == 1)
             {
                 numRows = 3;
                 numCols = 5;
                 height = 2;
+                maxItemStock = 5;
             }
-            else if (size == 02)
+            else if (size == 3)
             {
                 numRows = 7;
                 numCols = 10;
                 height = 4;
+                maxItemStock = 20;
             }
             else
             {
                 numRows = 5;
                 numCols = 7;
                 height = 3;
+                maxItemStock = 10;
             }
 
             initializeInventory(size);
@@ -189,14 +179,37 @@ namespace Amazoom
 
         private void initializeInventory(int size)
         {
+            string fileName;
+            string jsonString;
+            string fileName2;
+            string jsonString2;
+
+
+            if (size == 0)
+            {
+                fileName = "../../../defaultCatalogueS.json";
+                jsonString = File.ReadAllText(fileName);
+                fileName2 = "../../../defaultInventoryS.json";
+                jsonString2 = File.ReadAllText(fileName2);
+            }
+            else if (size == 2)
+            {
+                fileName = "../../../defaultCatalogueL.json";
+                jsonString = File.ReadAllText(fileName);
+                fileName2 = "../../../defaultInventoryL.json";
+                jsonString2 = File.ReadAllText(fileName2);
+            }
+            else
+            {
+                fileName = "../../../defaultCatalogueM.json";
+                jsonString = File.ReadAllText(fileName);
+                fileName2 = "../../../defaultInventoryM.json";
+                jsonString2 = File.ReadAllText(fileName2);
+            }
             
-            string fileName = "../../../defaultCatalogue.json";
-            string jsonString = File.ReadAllText(fileName);
             Product[] products = JsonSerializer.Deserialize<Product[]>(jsonString);
             UpdateCatalog(products);
 
-            string fileName2 = "../../../defaultInventory.json";
-            string jsonString2 = File.ReadAllText(fileName2);
             List<Item> items = JsonSerializer.Deserialize<List<Item>>(jsonString2);
             UpdateInventory(items);
         }
