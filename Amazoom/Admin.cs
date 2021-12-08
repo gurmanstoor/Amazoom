@@ -229,7 +229,7 @@ namespace Amazoom
                         }
                         else
                         {
-                            Console.WriteLine("Enter a valid integer(1 to 2):");
+                            Console.WriteLine("Enter a valid ID within the range: ");
                             line = Console.ReadLine();
                         }
 
@@ -395,18 +395,12 @@ namespace Amazoom
             if (option == 1)
             {
                 // Replace all items that are below max capacity stock
-                int truckId = warehouse.ReadAndReplaceCatalogStock();
-                if (truckId == -1)
-                {
-                    Console.WriteLine("------------------------------------");
-                    Console.WriteLine("Restock truck failed");
-                    Console.WriteLine("Restock truck will be resent");
-                }
-                else
-                {
-                    Console.WriteLine("------------------------------------");
-                    Console.WriteLine("Restock truck {0} has arrived to the warehouse and will be serviced soon", truckId);
-                }
+                string truckId = warehouse.ReadAndReplaceCatalogStock();
+                
+                
+                Console.WriteLine("------------------------------------");
+                Console.WriteLine("Restock truck(s) " + truckId + "has arrived to the warehouse and will be serviced soon");
+                
 
                 Console.WriteLine("Press Enter to return to Admin menu");
                 Console.ReadLine();

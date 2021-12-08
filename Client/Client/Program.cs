@@ -438,7 +438,11 @@ namespace Amazoom
                         Console.WriteLine("Enter a valid id: ");
                         line = Console.ReadLine();
                     }
-                    
+                    else if (!cart.Contains(id))
+                    {
+                        Console.WriteLine("Enter a valid id: ");
+                        line = Console.ReadLine();
+                    }
                     else
                     {
                         break;
@@ -446,10 +450,13 @@ namespace Amazoom
                 }
 
                 // Remove product from client cart
+                
                 cart.Remove(id);
                 Console.WriteLine("Item removed from cart.");
 
                 sendServer(new List<int> { id }, "rem");
+                
+                
             }
             // Return to cart screen
             viewCart(cart);
