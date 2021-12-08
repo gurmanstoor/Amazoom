@@ -217,10 +217,6 @@ namespace Amazoom
                         }
                         else if(option>=0 && option<products.Length)
                         {
-                            /*List<(Product item, int quantity)> discontinueOrder = new List<(Product item, int quantity)>();
-                            discontinueOrder.Add((products[option], products[option].stock));
-                            sendOrder(new Order(-1, discontinueOrder, ""));
-                            */
                             warehouse.discontiueProduct(products[option]);
                             products[option].name = products[option].name + " is now discontinued";
                             products[option].stock = -1;
@@ -282,15 +278,24 @@ namespace Amazoom
             displayAdmin();
         }
 
+        /*
+         * @param: order
+         * @return: void
+         * send the client's order to the warehouse to fullfil, and load trucks for the processed orders
+         */
         public void sendOrder(Order newOrder)
         {
+            // call fulfill order to get the robots to get the items
             warehouse.fulfillOrder(newOrder);
             double orderWeight = 0;
+
+            // the warehouse will add the order to processed orders queue when robot had collected them
             foreach (Order order in Computer.processedOrders)
             {
                 foreach ((Product, int) item in order.products)
                 {
                     orderWeight += item.Item1.weight * item.Item2;  // order has multiple quantities
+                    // when we have enough orders to exceed 1 trucks capacity, call another truck to load order and deliver
                     if (orderWeight > warehouse.maxTruckCapacity)
                     {
                         bool needNewTruck = true;
@@ -309,16 +314,23 @@ namespace Amazoom
             }
         }
 
-
+        /*
+         * @param: Intervel for when the trucks should be sent out
+         * @return: void
+         * if the truck isn't full and the time between the orders is greater than the interval, send out the truck
+         */
         public static void deliveryTimer(int interval)
         {
             while (true)
             {
+                // after we receieve our first order this timer starts
                 if (warehouse.orderLog.Count > 0)
                 {
                     int timeDifference =
                         (int)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds - warehouse.orderLog[warehouse.orderLog.Count - 1].Item2;
 
+                    // if the interval between the last order processed and now is greater than the interval and we still have orders waiting for delivery,
+                    // call a delivery truck to deliver these orders
                     if (timeDifference > interval && Computer.processedOrders.Count > 0)
                     {
                         bool needNewTruck = true;
