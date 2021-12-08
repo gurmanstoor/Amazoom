@@ -8,6 +8,7 @@ namespace Amazoom
 {
     public class BasicItem
     {
+        // Basic items class which has the name, weight, price and id, Item and Product are inheritied from this class
         public BasicItem(string name, double weight, double price, int id = -1)
         {
             this.name = name;
@@ -21,12 +22,14 @@ namespace Amazoom
         public double price { get; set; }
         public int id { get; set; }
     }
+    // Item class used for handling each individual Item (1 product with 3 stocks is 3 individual items)
     public class Item : BasicItem
     {
         public Item(string name, double weight, double price, int id = -1) : base(name, weight, price, id) { }
         public Item() : base() { }
         public int shelfId { get; set; }
     }
+    // Product class used to handle 1 product which has a stock attribute
     public class Product : BasicItem
     {
         public Product(string name, double weight, double price, int id = -1) : base(name, weight, price, id) { }
@@ -34,6 +37,7 @@ namespace Amazoom
         public int stock { get; set; }
     }
 
+    // Shelf class used for each individual shelf on each grid in the warehouse
     public class Shelf
     {
         public Shelf(List<Item> items, ShelfLocation shelfLocation, int id, double currWeight, double maxWeight)
@@ -52,7 +56,7 @@ namespace Amazoom
         public double currWeight { get; set; }
         public double maxWeight { get; set; }
     }
-
+    // Shelf location for each shelf, has a x,y location and right/left side and which height it's at
     public struct ShelfLocation
     {
         public int[] location;
@@ -60,7 +64,7 @@ namespace Amazoom
         public int height;
     }
 
-
+    
     public class Order
     {
         public Order(int id, List<(Product item, int quantity)> products, string status)
@@ -148,7 +152,7 @@ namespace Amazoom
 
         public Computer(int size)
         {
-            //initialize warehouse shelves, robots, and trucks
+            //initialize warehouse shelves, robots, and trucks based on admins input 
             if(size == 1)
             {
                 numRows = 3;
@@ -309,7 +313,7 @@ namespace Amazoom
 
                         shelfNum++;
                     }
-
+                    // Create a mutex for each grid of the warehouse for collision avoidance
                     for(int row=0; row < numRows; row++)
                     {
                         gridCellMutices[row,j] = new Mutex();
@@ -344,10 +348,11 @@ namespace Amazoom
         {
             Console.WriteLine("Order {0}", order.id);
             setOrderStatus(order, this.ORDER_RECEIVED);
+            // Add the order to the log along with the time it was received
             orderLog.Add((order, (int)DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds));
             
             setOrderStatus(order, this.ORDER_PROCESSING);
-                
+            
             collectOrder(order);
             setOrderStatus(order, this.ORDER_FULFILLED);
             
@@ -364,6 +369,8 @@ namespace Amazoom
             List<Item> orderItems = orderToItems(order); //convert our order into a list of individual items
             int currRobot = 0;
             List<Item> currInventory = ReadInventory();
+           
+            // Remove each item from order from the inventory to update warehouse inventory
             for (int i = 0; i < orderItems.Count; i++)
             {
                 for (int j = 0; j < currInventory.Count; j++)
@@ -380,11 +387,13 @@ namespace Amazoom
                     currRobot = 0;
                 }
 
+                // split the items in the order evenly between the robots to fetch
                 (Item, Shelf) currItem = (orderItems[i], shelves[orderItems[i].shelfId]);
                 this.workingRobots[currRobot].QueueItem(currItem, 1);
                 currRobot += 1;
             }
 
+            // Start a thread for each robot to fetch the items in it's queue
             int robotsInUse = 0;
             for (int i = 0; i < numRobots; i++)
             {
@@ -396,13 +405,13 @@ namespace Amazoom
                     threads[idx].Start();
                 }
             }
-
+            
             for (int i = 0; i < robotsInUse; i++)
             {
                 int idx = i;
                 threads[idx].Join();
             }
-
+            // Once all the items of the order are received, add it to processed orders queue
             UpdateInventory(currInventory);
             processedOrders.Enqueue(order);
 
@@ -416,7 +425,7 @@ namespace Amazoom
         {
             List<Item> inventory = ReadInventory();
 
-
+            
             foreach ((Product, int) product in order.products)
             {
                 string item_name = product.Item1.name;
@@ -476,7 +485,7 @@ namespace Amazoom
         public void loadProcessedOrders(DeliveryTruck currTruck)
         {
             //load processed orders into delivery truck as long as maxWeightCap of truck not exceeded 
-            while (processedOrders.Count > 0) //3
+            while (processedOrders.Count > 0) 
             {
 
                 Order currOrder;
@@ -487,7 +496,7 @@ namespace Amazoom
                 {
                     currOrderWeight += ((item.Item1.weight) * item.Item2);  // order has multiple quantities
                 }
-
+                // check if the weight of the order is larger than the truck (should never happen)
                 if (currOrderWeight > currTruck.maxWeightCapacity)
                 {
                     Console.WriteLine("ERROR: ORDER WEIGHT EXCEEDS TRUCK CAPACITY. NEED BIGGER TRUCK");
@@ -495,14 +504,17 @@ namespace Amazoom
                     setOrderStatus(order, "TRUCK FAILED");
                     break;
                 }
+                
                 else
                 {
+                    // if the the orders fits onto truck, add it 
                     if (currOrderWeight <= currTruck.maxWeightCapacity - currTruck.currWeight)
                     {
                         processedOrders.TryDequeue(out Order order);
                         currTruck.orders.Add(order);
                         currTruck.currWeight += currOrderWeight;
                     }
+                    // if order cannot fit, send this truck out since it cannot fit order and call new truck to put this order onto
                     else
                     {
                         bool needDeliveryTruck = true;
@@ -514,6 +526,8 @@ namespace Amazoom
                 }
 
             }
+            // If not orders are left, we can send the truck off (end case with no order coming in: trucks will not go out after every 1 order because
+            // the loadprocessed order is called on a interval to ensure we wait for more orders to come before sending)
             DeliveryTruck tempTruck2 = (DeliveryTruck)this.dockingQueue.Dequeue();
             serviceNextTruck();
             Thread deliveryThread2 = new Thread(() => deliverOrders(tempTruck2));
@@ -528,9 +542,10 @@ namespace Amazoom
          * */
         public DeliveryTruck serviceNextTruck(bool needNewDeliveryTruck = false)
         {
-            if (needNewDeliveryTruck) //check if another delivery truck is required and whether there is at least 1 available. If not, they are already in the dockingQueue
+            if (needNewDeliveryTruck) //check if another delivery truck is required 
             {
                 bool deliveryTruckInDock = false;
+                // if there is a delivery truck in the docking queue already, then we don't need another truck
                 foreach (Truck dockedTruck in dockingQueue)
                 {
                     if (dockedTruck.GetType() == typeof(DeliveryTruck))
@@ -556,7 +571,7 @@ namespace Amazoom
                 }
 
             }
-
+            // if we have restock trucks at the top of the queue, handle them and restock items to clear dock for delivery trucks
             if (this.dockingQueue.Count > 0)
             {
                 while (this.dockingQueue.Peek().GetType() == typeof(RestockTruck))
@@ -570,7 +585,7 @@ namespace Amazoom
             }
 
             DeliveryTruck currTruck = new DeliveryTruck(-1, -1);
-
+            // if we need delivery truck and there are no restock trucks, return the delivery truck so we can load processed orders
             if (this.dockingQueue.Count > 0)
             {
                 currTruck = (DeliveryTruck)this.dockingQueue.Peek();
@@ -594,7 +609,7 @@ namespace Amazoom
             foreach (Order order in truck.orders)
             {
                 Thread.Sleep(10);
-                if (order.id == -1)
+                if (order.id == -1) // for status of discontinued items leaving warehouse
                 {
                     setOrderStatus(order, this.DISCONTINUED_ORDER);
                 }
@@ -607,6 +622,7 @@ namespace Amazoom
             }
             truck.orders.Clear();
             Console.WriteLine("Truck {0} has delivered all items and has returned to warehouse.", truck.id);
+            //Once truck has returned from delivery, add back to delivery trucks queue to be called up again if needed
             this.deliveryTruckQueue.Enqueue(truck);
         }
 
@@ -636,7 +652,6 @@ namespace Amazoom
             truck.items.Clear();
             this.restockTruckQueue.Enqueue(truck);
 
-
         }
 
         /*
@@ -648,14 +663,14 @@ namespace Amazoom
         public void restockItem(Item newItem)
         {
             List<Item> inventory = ReadInventory();
-
+            // giving the new item an id with a buffer of to avoid any id duplicates
             newItem.id = invId+5;
             invId += 20;
 
             Random rand = new Random();
             while (true)
             {
-
+                // find a random shelf and see if the item can fit on it
                 int shelfNumber = rand.Next(0, this.shelves.Length - 1);
                 if (shelves[shelfNumber].currWeight + newItem.weight <= shelves[shelfNumber].maxWeight)
                 {
@@ -672,7 +687,10 @@ namespace Amazoom
         }
 
 
-        
+        /*
+         * @return: string with ids of the restock trucks bringing the items
+         * reads inventory to figure out which items are below their max stock and calls restock truck to bring items to warehouse
+         * */
         public string ReadAndReplaceCatalogStock()
         {
             Product[] currentCatalog = ReadCatalog();
@@ -690,7 +708,7 @@ namespace Amazoom
 
             while (productToRestock.Count > 0) //check if there are any items that need to be restocked
             {
-                
+                // assign a truck to bring the items to warehouse
                 while (availableRestockTruck == null)
                 {
                     if (this.restockTruckQueue.Count > 0) 
@@ -699,7 +717,7 @@ namespace Amazoom
                         break;
                     } 
                 }
-
+                // see how many items can fit onto truck and if full, call this restock truck to warehouse and get another truck to bring next itmes
                 (Product, int) product = productToRestock.Peek();
                 if (availableRestockTruck.currWeight + (product.Item1.weight * product.Item2) <= availableRestockTruck.maxWeightCapacity)
                 {
@@ -714,7 +732,7 @@ namespace Amazoom
                     availableRestockTruck = null;
                 }
             }
-          
+            // Once the restock trucks with the items arrive, service them to replenish the warehouse stock 
             this.dockingQueue.Enqueue(availableRestockTruck);
             serviceNextTruck();
             truckId = truckId + availableRestockTruck.id + " ";
@@ -747,6 +765,11 @@ namespace Amazoom
             
         }
 
+        /*
+         * @param: Order for which the notification is required
+         * @return: string
+         * returns the status of the order for which it was requested
+         * */
         public string notifyUser(Order order)
         {
             return order.status;
@@ -771,9 +794,9 @@ namespace Amazoom
         }
 
         /*
-         * @param: List of items to update the inventory with
-         * @return: void
-         * updates the inventory file using json serialize
+         * @param: Order for which the notification is required
+         * @return: string
+         * returns the status of the order for which it was requested
          * */
         public String queryOrderStatus(Order order)
         {
