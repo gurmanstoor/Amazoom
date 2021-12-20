@@ -129,24 +129,3 @@ Include a network of warehouses, and improved client functionality.
 The individual warehouses should have some variability in terms of the items they hold. If an order cannot be fulfilled by a single warehouse, it should be split across multiple warehouses if possible.
 
 Clients should have the ability to query how many of an item is in stock, *reserve* an item if in stock (e.g. by adding it to cart), and to place an order.  Once items are reserved, the order should be guaranteed to be deliverable.
-
-## Grading
-
-The grading scheme for this project is split as follows:
-
-
-| Component       |   Grade             |
-|-----------------|---------------------|
-| Overall System Design   |   18 %      |
-| Requirements Satisfied  |   10 %      |
-| Design Document         |   26 %      |
-| Functional Implementation  |   26 %   |
-| Testing                    |   10 %   |
-| Demo                    |   10 %   |
-| Extra features          |    15 %     |
-
-All students within a group will be awarded the same mark. The final grade is at the discretion of the TAs and instructor. Phases I, II, III are required to be completed by the team.
-
-## Deadline
-
-The deadline for the project is the day of the last class, **Dec 7th 8am PST via TurnItIn and Git**.  You must demo your project *before* the scheduled exam.  There will be a dedicated time to demo your project. Details of the Demo session and its date will be announced later in November.
