@@ -1,12 +1,3 @@
----
-layout: project
-title:  Amazoom Automated Warehouse
-date:   2021-10-19 23:00:00
-authors: [C. Antonio Sánchez, Ali Mousavifar]
-categories: [project, automated warehouse]
-published: true
-
----
 
 # Amazoom: Automated Warehouse Proposal
 
